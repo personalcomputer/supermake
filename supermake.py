@@ -195,8 +195,8 @@ def getFileDeps(filename, maxrecurse): #takes a sourcefile and finds all #includ
   return deps
 
 
-def BinaryGuessingStrategy1():
-  #Guessing Strategy 1: Name the binary after the containing folder (if sourcecode is under 'src' path then it is likely it is part of a larger folder named as the projectname)
+def BinaryGuessingStrategy_ContainingProjectFolder():
+  #Guessing Strategy: Name the binary after the containing folder (if sourcecode is under 'src' path then it is likely it is part of a larger folder named as the projectname)
   #Eg: if the soruce directory[where supermake was ran from] is at say ~/projects/DeathStar/src/ then this will create the binary at ~/projects/DeathStar/DeathStar.run
   if os.path.basename(os.getcwd()) != 'src':
     return False
@@ -209,8 +209,8 @@ def BinaryGuessingStrategy1():
     binary = '../'+binary
   return binary
 
-def BinaryGuessingStrategy2():
-  #Guessing Strategy 2: Look for the common GPL disclaimer and name it after the specified project name.
+def BinaryGuessingStrategy_GPLDisclaimerName():
+  #Guessing Strategy: Look for the common GPL disclaimer and name it after the specified project name.
   filenames = sorted(os.listdir('.'))
   for filename in filenames:
     if (not os.path.isdir(filename)) and (filename[-4:] == '.cpp' or filename[-4:] == '.cxx' or filename[-4:] == '.c++' or filename[-3:] == '.cc' or filename[-2:] == '.c'):
@@ -221,18 +221,9 @@ def BinaryGuessingStrategy2():
         break; #breaks nomatter what, because if this file uses the generic one ('This program') then they all will
   return False
 
-def BinaryGuessingStrategy3():
-  #Guessing Strategy 3: Look for pre-existing binarys (.run, .exe) and name it after those.
-  #filenames = os.listdir('.')
-  #for filename in filenames:
-  #  if filename[-4:] == '.run' or filename[-4:] == '.bin' or filename[-4:] == '.exe':
-  #    if filename[-5] != '1':
-  #      return filename[:-4]+'1'+filename[-4:]
-  #    return filename
-  return False
 
-def BinaryGuessingStrategy4():
-  #Guessing Strategy 4: Look for the main() function and see if it is in the top-level application class file, which is semi common afaik, at least in java ;).
+def BinaryGuessingStrategy_RootClassName():
+  #Guessing Strategy: Look for the main() function and see if it is in the top-level application class file, which is semi common afaik, at least in java ;).
   binary = ''
   if os.path.isdir('./bin'):
     binary = './bin/'+binary
@@ -240,17 +231,27 @@ def BinaryGuessingStrategy4():
     binary = './'+binary
   return False
 
-def BinaryGuessingStrategy5():
-  #Guessing Strategy 5: If the only file is main.cpp, call it main.run
+def BinaryGuessingStrategy_SingleFileName():
+  #Guessing Strategy: If there is only one source file, name it after that.
   filenames = os.listdir('.')
+  singleFile = False
+  singleFileName = ""
   for filename in filenames:
     if (not os.path.isdir(filename)) and (filename[-4:] == '.cpp' or filename[-4:] == '.cxx' or filename[-4:] == '.c++' or filename[-3:] == '.cc' or filename[-2:] == '.c'):
-      if filename[:4] != 'main':
+      if singleFile == True:
         return False
-  return 'main.run'
+      singleFile = True
+      singleFileName = filename
+  
+  return singleFileName[:-4] + '.run'
+  #NOTE THAT THERE IS A HUGE PROBLEM WITH JST REPLACING THE EXTENSION. IT ONLY WORKS HERE FOR .CPP OR OTHER 4 LETTER EXTENION, BUT MANY MORE ARE SUPPORTED. MAKE A SPLITFILENAMEATEXTENSION(FILENAME) FUNCTION THAT RETURNS (MAINPART,EXTPART) TUPLE AND UPDATE ALL CODE TO USE IT.
+  #TODO
+  #TODO
+  #TODO
+  #TODO
 
-def BinaryGuessingStrategy6():
-  #Guessing Strategy 6: Screw it. Call it something totally generic.
+def BinaryGuessingStrategy_GenericName():
+  #Guessing Strategy: Screw it. Call it something totally generic.
   return 'program.run'
 
 ####### Main - mostly everything
@@ -323,25 +324,20 @@ def main():
       if m:
         binary = m.group(1)
     if binary == '': #'Guess' an acceptable binary name
-      crazyGuesswork = False
 
-      binary = BinaryGuessingStrategy1()
+      binary = BinaryGuessingStrategy_SingleFileName()
       if not binary:
-        binary = BinaryGuessingStrategy2()
+        binary = BinaryGuessingStrategy_ContainingProjectFolder()
         if not binary:
-          binary = BinaryGuessingStrategy3()
+          binary = BinaryGuessingStrategy_GPLDisclaimerName()
           if not binary:
-            binary = BinaryGuessingStrategy4()
+            binary = BinaryGuessingStrategy_RootClassName()
             if not binary:
-              binary = BinaryGuessingStrategy5()
-              if not binary:
-                binary = BinaryGuessingStrategy6()
-          else:
-            crazyGuesswork = True #Because this will be REALLY FREAKING WEIRD when they have like random other shit in the directory and this names it after it
+              binary = BinaryGuessingStrategy_GenericName()
 
       guessMessage = 'Warning: Guessed a binary name: ' + binary + ' (use --binary=NAME to specify this yourself)'
-      if crazyGuesswork:
-        guessMessage += '(this uses crazy guesswork and could be totally off)'
+      #if crazyGuesswork:
+      #  guessMessage += '(this uses crazy guesswork and could be totally off)'
       message(guessMessage)
 
   customFlags = ''
