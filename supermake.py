@@ -113,7 +113,16 @@ isCCode = True #until proven otherwise.
 def message(text):
   if not quiet or text[:6] == 'Error:':
     print('Supermake: ' + text)
+    
+fileCache = {}
 
+def GetFileFromCache(filename): #This loads and caches all files for speed. (supermake requests the same sorucecode files multiple times each run). This uses the lazy-load idiom.
+  if filename not in fileCache:
+    f = open(filename, 'r')
+    fileCache[filename] = f.read()
+    f.close()
+  return fileCache[filename]
+  
 ####### Helper Functions
 def filterCommandlineOptionDescrepency(argv):
   libSpecified = False
@@ -166,13 +175,11 @@ def getFileDeps(filename, maxrecurse): #takes a sourcefile and finds all #includ
     emptylist = []
     return emptylist
 
-  f = open(filename, 'r')
-  text = f.read()
-  m = re.findall(r'^#include <(.+(?:\.h)?(?:pp)?)>', text, re.MULTILINE) #Warning, if #includes are commented out using C comments(/* */), they will still be included.  I don't know how to avoid this using regex, probally not possible with just regex. TODO
+  m = re.findall(r'^#include <(.+(?:\.h)?(?:pp)?)>', GetFileFromCache(filename), re.MULTILINE) #Warning, if #includes are commented out using C comments(/* */), they will still be included.  I don't know how to avoid this using regex, probally not possible with just regex. TODO
   for case in m:
     if case in librarys:
       depend.extend(librarys[case])
-  m = re.findall(r'^#include "(.+\.h(?:pp)?)"', text, re.MULTILINE)
+  m = re.findall(r'^#include "(.+\.h(?:pp)?)"', GetFileFromCache(filename), re.MULTILINE)
   deps = []
   for case in m:
     if case[-4:] == ('.hpp') > -1: #language is determined entirely by file extensions :x
@@ -207,8 +214,7 @@ def BinaryGuessingStrategy2():
   filenames = sorted(os.listdir('.'))
   for filename in filenames:
     if (not os.path.isdir(filename)) and (filename[-4:] == '.cpp' or filename[-4:] == '.cxx' or filename[-4:] == '.c++' or filename[-3:] == '.cc' or filename[-2:] == '.c'):
-      filetext = open(filename).read(1000)
-      m = re.search('\s*(.+) is free software(?:;)|(?::) you can redistribute it and/or modify', filetext)
+      m = re.search('\s*(.+) is free software(?:;)|(?::) you can redistribute it and/or modify', GetFileFromCache(filename))
       if m:
         if m.group(1) != 'This program' and m.group(1) != 'This software':
           return m.group(1)
