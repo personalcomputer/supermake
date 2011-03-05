@@ -1,11 +1,11 @@
-Supermake
-=========
+Supermake Readme
+================
 
 Supermake is a simple makefile generator for C or C++ that goes above and beyond to _streamline_ and _simplify_ the entire tedious build proccess.
 
-Give it a try, and run `supermake --make --run --autoclean` (alternatively just do `supermake --print` to see what it would of generated, without overwriting anything)) in your project's directory to observe its power, automatically generating a makefile, compiling it, and then running the resultant binary. You may wish to first backup your pre-existing makefile, although Supermake will do this automatically.
+Give it a try, and run `supermake --make --run --autoclean` (alternatively just do `supermake --print` to see what it would of generated, without overwriting anything) in your project's directory to observe its power, automatically generating a makefile, compiling it, and then running the resultant binary. You may wish to first backup your pre-existing makefile, although Supermake will do this automatically.
 
-**See `supermake --help` for further information and usage.**
+**For further information and usage, see `supermake --help`.**
 
 ### Features
 * Start using it like you expect in an instant. Supermake just works, if you will.
@@ -14,7 +14,7 @@ Give it a try, and run `supermake --make --run --autoclean` (alternatively just 
 * Easily specify custom gcc flags.
 * Automatically compile your project.
 * Automatically execute the resultant binary.
-* Build static and dynamic librarys, too.
+* Build static and dynamic librarys.
 
 ### Notes/Troubleshooting
 If Supermake fails to recognize some librarys you are using (there unfortunately is no error message on this until the compilation stage), you can manually add them to the 'librarys' datastructure as defined on lines 73-101 of supermake.py. Supermake can't support every single lbirary out there, but I try to support the ones I use most myself, at least. Send me a message with the additional library support added and I'll commit it to master.
