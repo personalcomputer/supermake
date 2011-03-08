@@ -27,6 +27,11 @@ Another known issue is that Supermake will not acknowledge source files (.cpp an
 
 Lastly, it is worth noting that Supermake automatically includes librarys from /usr/local/lib, and sets LD_LIBRARY_PATH accordingly when `--run` is specified.
 
+### Install
+To use Supermake effectively, you will need to need to create a symbolic link somewhere in your $PATH that points to supermake.py. This allows you to execute the command 'supermake' from any working directory.
+
+Ex: `sudo mkdir -p /usr/local/bin && sudo ln supermake.py /usr/local/bin/supermake`
+
 ### Legal
 Supermake is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -40,5 +45,3 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-_See LEGAL for full license information._
