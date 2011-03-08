@@ -103,13 +103,13 @@ quiet = False
 isCCode = True #until proven otherwise.
 
 ####### Util Functions
-def message(text):
-  if not quiet or text[:6] == 'Error:':
+def message(text, critical = False):
+  if (not quiet) or critical:
     print('Supermake: ' + text)
     
 fileCache = {}
 
-def GetFileFromCache(filename): #This loads and caches all files for speed. (supermake requests the same sorucecode files multiple times each run). This uses the lazy-load idiom.
+def GetFileFromCache(filename): #This loads and caches all files for speed. (Supermake requests the same sorucecode files multiple times each run). This uses the lazy-load idiom.
   if filename not in fileCache:
     f = open(filename, 'r')
     fileCache[filename] = f.read()
@@ -127,8 +127,7 @@ sourceCodeInDirectoryCache = None
 def sourceCodeInDirectory(): #DOES NOT INCLUDE HEADERS
   global sourceCodeInDirectoryCache
   if not sourceCodeInDirectoryCache:
-    filenames = sorted(os.listdir('.'))
-    sourceCodeInDirectoryCache = [filename for filename in filenames if ((not os.path.isdir(filename)) and (filename[-4:] == '.cpp' or filename[-4:] == '.cxx' or filename[-4:] == '.c++' or filename[-3:] == '.cc' or filename[-2:] == '.c'))]
+    sourceCodeInDirectoryCache = sorted([filename for filename in os.listdir('.') if ((not os.path.isdir(filename)) and (filename[-4:] == '.cpp' or filename[-4:] == '.cxx' or filename[-4:] == '.c++' or filename[-3:] == '.cc' or filename[-2:] == '.c'))])
   return sourceCodeInDirectoryCache
   
 ####### Helper Functions
@@ -156,23 +155,23 @@ def checkCommandlineOptions(argv):
         argumentIsValid = True
         break;
     if not argumentIsValid:
-      message('Error: Invalid or malformed argument: "'+argument+'". See --help.')
+      message('Error: Invalid or malformed argument: "'+argument+'". See --help.', critical=True)
       exit(1)
 
   if '--print' in argv and '--make' in argv:
-    message('Error: --print and --make specified but --print supresses writing to makefile.')
+    message('Error: --print and --make specified but --print supresses writing to makefile.', critical=True)
     exit(1)
 
   if libSpecified and '--run' in argv:
-    message('Error: --run specified, but you are building a library (--lib specified).')
+    message('Error: --run specified, but you are building a library (--lib specified).', critical=True)
     exit(1)
 
   if '--run' in argv and '--make' not in argv:
-    message('Error: --run specified, but --run requires --make, which is unspecified.')
+    message('Error: --run specified, but --run requires --make, which is unspecified.', critical=True)
     exit(1)
 
   if binarySpecified and libSpecified:
-    message('Error: Both --lib and --binary specified.')
+    message('Error: Both --lib and --binary specified.', critical=True)
     exit(1)
 
 def getFileDeps(filename, maxrecurse): #takes a sourcefile and finds all #includes(recusively) in order to determine what files the sourcefile depends upon
@@ -244,7 +243,7 @@ def BinaryGuessingStrategy_ParentFolder():
   return os.path.basename(os.path.realpath('.'))+'.run'
 
 def BinaryGuessingStrategy_GenericName():
-  #Guessing Strategy: Screw it. Call it something totally generic.
+  #Guessing Strategy: Call it something totally generic.
   return 'program.run'
   
 def determineIfAutocleanNeeded(oldMakefile, newMakefile): 
@@ -258,15 +257,14 @@ def determineIfAutocleanNeeded(oldMakefile, newMakefile):
   m2 = re.search('^FLAGS = .+$', newMakefile, re.MULTILINE)
   if m2.group() == m1.group():
     m3 = re.search('^CUSTOMFLAGS = .+$', oldMakefile, re.MULTILINE)
-    if not m3:
-      return True
+    if not m3: #note that this depends upon the fact that they have already been checked to see if they are identical.
+      return True 
     m4 = re.search('^CUSTOMFLAGS = .+$', newMakefile, re.MULTILINE)
     if not m4:
       return True
     if m4.group() == m3.group():
       return False
-    else:
-      return True
+    return True
   else:
     return True
   
@@ -301,7 +299,7 @@ def main():
   #Find sourcefiles and acquire their dependencies(Supermake considers a file to depend upon another if it is #included)
   hasSourceFiles = False
   if len(sourceCodeInDirectory()) <= 0:
-    message('Error: No sourcecode found. For help see --help.')
+    message('Error: No sourcecode found. For help see --help.', critical=True)
     sys.exit()
   for filename in sourceCodeInDirectory():
     if filename[-4:] == '.cpp' or filename[-4:] == '.cxx' or filename[-4:] == '.c++':
@@ -422,23 +420,23 @@ def main():
   else:
     needsAutoClean = False
     if os.path.exists('makefile') or os.path.exists('Makefile'):
-      oldFilename = ''
+      oldMakefileFilename = ''
       if os.path.exists('makefile'):
-        oldFilename = 'makefile'
+        oldMakefileFilename = 'makefile'
       elif os.path.exists('Makefile'):
-        oldFilename = 'Makefile'
+        oldMakefileFilename = 'Makefile'
 
       needsAutoClean = determineIfAutocleanNeeded(open(oldMakefileFilename, 'r').read(), makefile);
 
-      os.rename(oldFilename, '/tmp/'+oldFilename+'.old')
-      message('Warning: Overwriting previous makefile (previous makefile copied to /tmp/'+oldFilename+'.old in case you weren\'t ready for this!)')
+      os.rename(oldMakefileFilename, '/tmp/'+oldMakefileFilename+'.old')
+      message('Warning: Overwriting previous makefile (previous makefile copied to /tmp/'+oldMakefileFilename+'.old in case you weren\'t ready for this!)')
 
     makefileFile = open('makefile', 'w')
     makefileFile.write(makefile)
     makefileFile.close()
 
     if needsAutoClean:
-      message('Makefiles critically differ, executing command: make clean')
+      message('Makefiles critically differ. Executing command: make clean')
       os.system('make clean')
 
     #Compile
