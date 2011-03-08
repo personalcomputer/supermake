@@ -76,8 +76,8 @@ librarys['SDL/SDL_mixer.h'] = ['-lSDL_mixer', '-lSDL']
 librarys['SDL/SDL_opengl.h'] = ['-lGL', '-lSDL']
 librarys['SDL/SDL_ttf.h'] = ['-lSDL_ttf', '-lSDL']
 librarys['SDL/SDL_net.h'] = ['-lSDL_net', '-lSDL']
-librarys['SDL/SDL_thread.h'] = ['-lSDL'] #`sdl-config --libs` says I need -lpthread, but this is not crossplatform and there doesnt seem to be any issues from leaving it out (can sdl auto add it through _Pragmas or something?).  
-librarys['GL/glfw.h'] = ['-lglfw', '-lGL']
+librarys['SDL/SDL_thread.h'] = ['-lSDL', '-pthread']
+librarys['GL/glfw.h'] = ['-lGL', '-lX11', '-lXrandr', '-pthread', '-lglfw']
 librarys['Box2D/Box2D.h'] = ['-lBox2D']
 librarys['openssl/sha.h'] = ['-lcrypto']
 librarys['gcrypt.h'] = ['-lgcrypt', '-lgpg-error']
@@ -387,7 +387,7 @@ def main():
 
   if library == '':
     makefile += binary + ': $(OBJS)\n'
-    makefile += '\t'+compiler+' $(FLAGS) $(OBJS) -o '+binary+'\n\n'
+    makefile += '\t'+compiler+' $(OBJS) $(FLAGS) -o '+binary+'\n\n'
 
   else:
     makefile += 'all: '+library+'.a '+library+'.so\n\n'
