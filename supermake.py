@@ -252,6 +252,29 @@ def BinaryGuessingStrategy_GenericName():
   #Guessing Strategy: Screw it. Call it something totally generic.
   return 'program.run'
   
+def determineIfAutocleanNeeded(oldMakefile, newMakefile): 
+  if oldMakefile == newMakefile: #No reason to check further if they are identical.
+    return False
+  #Idea: Go through old makefile and if the only differences are in new files and new $OBJS, then don't autoclean. But if anything else changes, autoclean. ..This actually isn't that complicated :D (but is hacky -- really not too bad though).  
+  #What it currently does: simply looks to see if $FLAGS differ.
+  m1 = re.search('^FLAGS = .+$', oldMakefile, re.MULTILINE)
+  if not m1:
+    return True
+  m2 = re.search('^FLAGS = .+$', newMakefile, re.MULTILINE)
+  if m2.group() == m1.group():
+    m3 = re.search('^CUSTOMFLAGS = .+$', oldMakefile, re.MULTILINE)
+    if not m3:
+      return True
+    m4 = re.search('^CUSTOMFLAGS = .+$', newMakefile, re.MULTILINE)
+    if not m4:
+      return True
+    if m4.group() == m3.group():
+      return False
+    else:
+      return True
+  else:
+    return True
+  
 
 ####### Main - mostly everything
 def main():
@@ -298,7 +321,7 @@ def main():
       fileDeps.append((filename, deps))
 
   if not hasSourceFiles:
-    message('Error: No sourcecode found in directory. For help see --help.')
+    message('Error: No sourcecode found. For help see --help.')
     sys.exit()
 
   depend = list(set(depend)) #remove duplicates
@@ -323,7 +346,6 @@ def main():
       if m:
         binary = m.group(1)
     if binary == '': #'Guess' an acceptable binary name
-
       binary = BinaryGuessingStrategy_SingleFileName()
       if not binary:
         binary = BinaryGuessingStrategy_ContainingProjectFolder()
@@ -332,7 +354,9 @@ def main():
           if not binary:
             binary = BinaryGuessingStrategy_RootClassName()
             if not binary:
-              binary = BinaryGuessingStrategy_GenericName()
+              binary = BinaryGuessingStrategy_ParentFolder()
+              if not binary:
+                binary = BinaryGuessingStrategy_GenericName()
 
       guessMessage = 'Guessed a binary name: ' + binary + ' (use --binary=NAME to specify this yourself)'
       #if crazyGuesswork:
@@ -423,13 +447,7 @@ def main():
       elif os.path.exists('Makefile'):
         oldFilename = 'Makefile'
 
-      oldMakefile = open(oldFilename, 'r').read();
-      if oldMakefile != makefile:
-        autoClean = True;
-        #I really need a more advanced autoclean thingy. TODO Idea: Go through old makefile and if the only differences are in new files and new $OBJS, then don't autoclean. But if anything else changes, autoclean. ..This actually isn't that complicated :D (but is hacky -- really not too bad though). 
-        #TODO
-        #TODO
-        #TODO
+      autoClean = determineIfAutocleanNeeded(open(oldFilename, 'r').read(), makefile);
 
       os.rename(oldFilename, '/tmp/'+oldFilename+'.old')
       message('Warning: Overwriting previous makefile (previous makefile copied to /tmp/'+oldFilename+'.old in case you weren\'t ready for this!)')
