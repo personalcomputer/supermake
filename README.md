@@ -21,7 +21,7 @@ Supermake is written for python version 3.x, but should work in python 2 as well
 
 If Supermake fails to recognize some libraries you are using (there unfortunately is no error message on this until the compilation stage), you can manually add them to the 'libraries' datastructure as defined on lines 73-101 of supermake.py. Supermake can't support every single library out there, but I try to support the ones I use most myself, at least. Send me your github pull request with the additional library support and I'll gladly accept it.
 
-A known bug with supermake is that it cannot preproccess potentially disabledblocks of code from `#ifdefs` or `#ifs`. This may lead to unwanted library inclusions if you use different libraries in your project depending upon preproccessor `#ifdefs` or `#ifs`.
+A known bug with supermake is that it cannot preproccess potentially disabled blocks of code from `#ifdefs` or `#ifs`. This may lead to unwanted library inclusions if you use different libraries in your project depending upon preproccessor `#ifdefs` or `#ifs`.
 
 Another known issue is that supermake will not acknowledge source files (.cpp and .c) not in the current directory. Changing this would require an overhaul of the fundamental design (requiring manually specifying files, etc).
 
