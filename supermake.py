@@ -40,13 +40,11 @@ the build proccess.
   --run             Execute the compiled binary. Only to be used in combination
                     with --make.
   --debug           Add the -g and -DDEBUG debug flags to the gcc compilation
-                    flags.
+                    flags, and, if --run is specified, runs it in gdb.
   --warn            Add the -Wall warning flag to the gcc compilation flags.
   --binary=NAME     Name the binary that the makefile generates. Supermake
                     defaultly just takes a guess.
-  --autoclean       Automatically run 'make clean' if the generated makefile
-                    differs from the previous one.
-  --usrlocal        Enable the use of librarys in /usr/local/lib.
+                    irrelevent changes, such as adding a new file to the project)
   --deplevel=LEVEL  Limit how many LEVELs deep to add file dependencies. 0 means
                     no dependencies, 1 includes only direct dependencies, 2
                     includes dependencies from direct dependencies etc. The
@@ -138,7 +136,7 @@ def filterCommandlineOptionDescrepency(argv):
       binarySpecified = True
       binary = m
 
-  validArgumentRegexPatterns = ['--binary=.+', '--lib=.+', '--deplevel=\d+', '--custom=.+', '--autoclean', '--usrlocal', '--warn', '--debug', '--descrete', '--quiet', '--print', '--make', '--run']
+  validArgumentRegexPatterns = ['--binary=.+', '--lib=.+', '--deplevel=\d+', '--custom=.+', '--warn', '--debug', '--descrete', '--quiet', '--print', '--make', '--run']
 
   for argument in argv[1:]:
     argumentIsValid = False;
@@ -314,7 +312,7 @@ def main():
       basename = os.path.basename(library)
       if basename[:3] != 'lib':
         library = os.path.join(os.path.dirname(library), 'lib'+ basename)
-        message('Warning: Prepending "lib" to the library name: "'+library+'.so", "'+library+'.a".')
+        message('Prepending "lib" to the library name: "'+library+'.so", "'+library+'.a".')
 
   #Name the binary
   binary = ''
@@ -335,7 +333,7 @@ def main():
             if not binary:
               binary = BinaryGuessingStrategy_GenericName()
 
-      guessMessage = 'Warning: Guessed a binary name: ' + binary + ' (use --binary=NAME to specify this yourself)'
+      guessMessage = 'Guessed a binary name: ' + binary + ' (use --binary=NAME to specify this yourself)'
       #if crazyGuesswork:
       #  guessMessage += '(this uses crazy guesswork and could be totally off)'
       message(guessMessage)
@@ -364,8 +362,7 @@ def main():
 
   makefile += 'FLAGS ='
 
-  if '--usrlocal' in argv:
-    makefile += ' -L/usr/local/include '
+  makefile += ' -L/usr/local/include '
 
   makefile += ' ' + ' '.join(depend)
 
@@ -428,6 +425,10 @@ def main():
       oldMakefile = open(oldFilename, 'r').read();
       if oldMakefile != makefile:
         autoClean = True;
+        #I really need a more advanced autoclean thingy. TODO Idea: Go through old makefile and if the only differences are in new files and new $OBJS, then don't autoclean. But if anything else changes, autoclean. ..This actually isn't that complicated :D (but is hacky -- really not too bad though). 
+        #TODO
+        #TODO
+        #TODO
 
       os.rename(oldFilename, '/tmp/'+oldFilename+'.old')
       message('Warning: Overwriting previous makefile (previous makefile copied to /tmp/'+oldFilename+'.old in case you weren\'t ready for this!)')
@@ -436,9 +437,9 @@ def main():
     f.write(makefile)
     f.close()
 
-    if autoClean and '--autoclean' in sys.argv:
-      message('Makefiles differ, executing command: make clean')
-      os.system('make clean')
+    if autoClean:
+      message('Makefiles critically differ, executing command: make clean')
+      os.system('make clean > /dev/null')
 
     #Compile
     if '--make' in argv:
@@ -449,8 +450,8 @@ def main():
         if splitBinPath[0] != '':
           cmd += ' && cd "'+splitBinPath[0]+'"' #move to the working directory likely expected by the binary
         cmd += ' &&'
-        if '--usrlocal' in argv:
-          cmd += ' LD_LIBRARY_PATH=/usr/local/lib/'
+        #if '--usrlocal' in argv:
+        cmd += ' LD_LIBRARY_PATH=/usr/local/lib/'
         cmd += ' "./' + splitBinPath[1]+'"' #If --debug is enabled I would also have it automatically run in gdb but I expect this will put off users who aren't familiar with gdb, don't expect it, and don't know what to do when the alien gdb console pops up.
       message('Executing command: ' + cmd)
       os.system(cmd)

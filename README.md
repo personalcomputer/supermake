@@ -25,6 +25,8 @@ A known bug with supermake is that it cannot preproccess potentially disabled bl
 
 Another known issue is that supermake will not acknowledge source files (.cpp and .c) not in the current directory. Changing this would require an overhaul of the fundamental design (requiring manually specifying files, etc).
 
+Lastly, it is worth noting that supermake automatically includes librarys from /usr/local/lib, and sets LD_LIBRARY_PATH accordingly when --run is specified.
+
 ### Legal
 Supermake is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
