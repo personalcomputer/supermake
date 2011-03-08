@@ -45,10 +45,6 @@ the build proccess.
   --binary=NAME     Name the binary that the makefile generates. Supermake
                     defaultly just takes a guess.
                     irrelevent changes, such as adding a new file to the project)
-  --deplevel=LEVEL  Limit how many LEVELs deep to add file dependencies. 0 means
-                    no dependencies, 1 includes only direct dependencies, 2
-                    includes dependencies from direct dependencies etc. The
-                    default is a virtually infinite max deplevel.
   --custom=FLAGS    Compiles everything with additional custom gcc FLAGS. This
                     can be used, for example, for specifying extra -D defines.
   --lib=NAME        Build the project as a library instead. NAME specifys the
@@ -300,7 +296,7 @@ def main():
   #Determine maxrecurse(--deplevel).
   maxrecurse = 15 #default #I personally make code I write work with 1(excluding a lot of things like inheritance -- nevermind), but there are different ideas on where you should place #includes. In most projects 15 is enough to cover them all and making sure their project compiles is far more important to supermake's objectives than defaulting to enforcing a subjective methodology decision on users.
   for argument in argv:
-    m = re.search('--deplevel=(\d+)', argument)
+    m = re.search('--deplevel=(\d+)', argument) #UNDOCUMENTED FEATURE: --DEPLEVEL
     if m:
       maxrecurse = int(m.group(1))
 
