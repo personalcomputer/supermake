@@ -222,11 +222,7 @@ def BinaryGuessingStrategy_GPLDisclaimerName():
 
 def BinaryGuessingStrategy_RootClassName():
   #Guessing Strategy: Look for the main() function and see if it is in the top-level application class file, which is semi common afaik, at least in java ;).
-  binary = ''
-  if os.path.isdir('./bin'):
-    binary = './bin/'+binary
-  else:
-    binary = './'+binary
+  #TODO
   return False
 
 def BinaryGuessingStrategy_SingleFileName():
@@ -247,10 +243,15 @@ def BinaryGuessingStrategy_SingleFileName():
   #TODO
   #TODO
   #TODO
+  
+def BinaryGuessingStrategy_ParentFolder():
+  #Guessing Strategy: Name it after the parent folder.
+  return os.path.basename(os.path.realpath('.'))+'.run'
 
 def BinaryGuessingStrategy_GenericName():
   #Guessing Strategy: Screw it. Call it something totally generic.
   return 'program.run'
+  
 
 ####### Main - mostly everything
 def main():
