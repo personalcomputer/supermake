@@ -122,6 +122,15 @@ def splitOnExtension_Extension(path):
 def splitOnExtension_Mainpart(path):
   return path[:path.rfind('.')]
   
+sourceCodeInDirectoryCache = None
+
+def sourceCodeInDirectory(): #DOES NOT INCLUDE HEADERS
+  global sourceCodeInDirectoryCache
+  if not sourceCodeInDirectoryCache:
+    filenames = sorted(os.listdir('.'))
+    sourceCodeInDirectoryCache = [filename for filename in filenames if ((not os.path.isdir(filename)) and (filename[-4:] == '.cpp' or filename[-4:] == '.cxx' or filename[-4:] == '.c++' or filename[-3:] == '.cc' or filename[-2:] == '.c'))]
+  return sourceCodeInDirectoryCache
+  
 ####### Helper Functions
 def filterCommandlineOptionDescrepency(argv):
   libSpecified = False
@@ -210,14 +219,12 @@ def BinaryGuessingStrategy_ContainingProjectFolder():
 
 def BinaryGuessingStrategy_GPLDisclaimerName():
   #Guessing Strategy: Look for the common GPL disclaimer and name it after the specified project name.
-  filenames = sorted(os.listdir('.'))
-  for filename in filenames:
-    if (not os.path.isdir(filename)) and (filename[-4:] == '.cpp' or filename[-4:] == '.cxx' or filename[-4:] == '.c++' or filename[-3:] == '.cc' or filename[-2:] == '.c'):
-      m = re.search('\s*(.+) is free software(?:;)|(?::) you can redistribute it and/or modify', GetFileFromCache(filename))
-      if m:
-        if m.group(1) != 'This program' and m.group(1) != 'This software':
-          return m.group(1)
-        break; #breaks nomatter what, because if this file uses the generic one ('This program') then they all will
+  for filename in sourceCodeInDirectory():
+    m = re.search('\s*(.+) is free software(?:;)|(?::) you can redistribute it and/or modify', GetFileFromCache(filename))
+    if m:
+      if m.group(1) != 'This program' and m.group(1) != 'This software':
+        return m.group(1)
+      break; #breaks nomatter what, because if this file uses the generic one ('This program') then they all will
   return False
 
 
@@ -228,17 +235,9 @@ def BinaryGuessingStrategy_RootClassName():
 
 def BinaryGuessingStrategy_SingleFileName():
   #Guessing Strategy: If there is only one source file, name it after that.
-  filenames = os.listdir('.')
-  singleFile = False
-  singleFileName = ""
-  for filename in filenames:
-    if (not os.path.isdir(filename)) and (filename[-4:] == '.cpp' or filename[-4:] == '.cxx' or filename[-4:] == '.c++' or filename[-3:] == '.cc' or filename[-2:] == '.c'):
-      if singleFile == True:
-        return False
-      singleFile = True
-      singleFileName = filename
-  
-  return splitOnExtension_Mainpart(singleFileName)+'.run'
+  if len(sourceCodeInDirectory()) == 1:
+    return splitOnExtension_Mainpart(sourceCodeInDirectory()[0])+'.run'
+  return False
   
 def BinaryGuessingStrategy_ParentFolder():
   #Guessing Strategy: Name it after the parent folder.
@@ -301,24 +300,20 @@ def main():
 
   #Find sourcefiles and acquire their dependencies(Supermake considers a file to depend upon another if it is #included)
   hasSourceFiles = False
-  filenames = sorted(os.listdir('.'))
-  for filename in filenames:
-    if (not os.path.isdir(filename)) and (filename[-4:] == '.cpp' or filename[-4:] == '.cxx' or filename[-4:] == '.c++' or filename[-3:] == '.cc' or filename[-2:] == '.c'):
-      hasSourceFiles = True
-      if filename[-4:] == '.cpp' or filename[-4:] == '.cxx' or filename[-4:] == '.c++':
-        isCCode = False
-      deps = sorted(getFileDeps(filename, maxrecurse))
-      for depIndex in range(len(deps)):
-        if deps[depIndex][:-2] == filename[:-4]: #This puts the corrosponding header file right after the source file. [ie  :monster.cpp monster.h otherstuff.h otherstuff2.h]
-          dep = deps[depIndex]
-          deps.remove(deps[depIndex])
-          deps.insert(0,dep)
-          break;
-      fileDeps.append((filename, deps))
-
-  if not hasSourceFiles:
+  if len(sourceCodeInDirectory()) <= 0:
     message('Error: No sourcecode found. For help see --help.')
     sys.exit()
+  for filename in sourceCodeInDirectory():
+    if filename[-4:] == '.cpp' or filename[-4:] == '.cxx' or filename[-4:] == '.c++':
+      isCCode = False
+    deps = sorted(getFileDeps(filename, maxrecurse))
+    for depIndex in range(len(deps)):
+      if deps[depIndex][:-2] == filename[:-4]: #This puts the corrosponding header file right after the source file. [ie  :monster.cpp monster.h otherstuff.h otherstuff2.h]
+        dep = deps[depIndex]
+        deps.remove(deps[depIndex])
+        deps.insert(0,dep)
+        break;
+    fileDeps.append((filename, deps))
 
   depend = list(set(depend)) #remove duplicates
   depend = sorted(depend) #These alphabetic sorts are just to make the output look nice and consistent.
