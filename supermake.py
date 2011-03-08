@@ -121,6 +121,12 @@ def GetFileFromCache(filename): #This loads and caches all files for speed. (sup
     f.close()
   return fileCache[filename]
   
+def splitOnExtension_Extension(path):
+  return path[path.rfind('.'):]
+  
+def splitOnExtension_Mainpart(path):
+  return path[:path.rfind('.')]
+  
 ####### Helper Functions
 def filterCommandlineOptionDescrepency(argv):
   libSpecified = False
@@ -237,12 +243,7 @@ def BinaryGuessingStrategy_SingleFileName():
       singleFile = True
       singleFileName = filename
   
-  return singleFileName[:-4] + '.run'
-  #NOTE THAT THERE IS A HUGE PROBLEM WITH JST REPLACING THE EXTENSION. IT ONLY WORKS HERE FOR .CPP OR OTHER 4 LETTER EXTENION, BUT MANY MORE ARE SUPPORTED. MAKE A SPLITFILENAMEATEXTENSION(FILENAME) FUNCTION THAT RETURNS (MAINPART,EXTPART) TUPLE AND UPDATE ALL CODE TO USE IT.
-  #TODO
-  #TODO
-  #TODO
-  #TODO
+  return splitOnExtension_Mainpart(singleFileName)+'.run'
   
 def BinaryGuessingStrategy_ParentFolder():
   #Guessing Strategy: Name it after the parent folder.
@@ -376,10 +377,7 @@ def main():
 
   makefile += 'OBJS ='
   for fileDep in fileDeps:
-    if isCCode:
-      makefile += ' ' + fileDep[0][:-2] + '.o'
-    else:
-      makefile += ' ' + fileDep[0][:-4] + '.o'
+    makefile += ' ' + splitOnExtension_Mainpart(fileDep[0])+'.o'
   makefile += '\n'
 
   if customFlags != '':
@@ -423,11 +421,7 @@ def main():
 
 
   for fileDep in fileDeps:
-    objectFileName = ""
-    if isCCode:
-      objectFileName = fileDep[0][:-2] + '.o'
-    else:
-      objectFileName = fileDep[0][:-4] + '.o'
+    objectFileName = splitOnExtension_Mainpart(fileDep[0])+'.o'
     makefile += objectFileName+': '+fileDep[0]+' '+' '.join(fileDep[1])+'\n'
     makefile += '\t'+compiler+' $(FLAGS) -c '+fileDep[0]+' -o '+objectFileName+'\n\n'
 
