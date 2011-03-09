@@ -43,7 +43,6 @@ the build proccess.
   --warn            Add the -Wall warning flag to the gcc compilation flags.
   --binary=NAME     Name the binary that the makefile generates. Supermake
                     defaultly just takes a guess.
-                    irrelevent changes, such as adding a new file to the project)
   --custom=FLAGS    Compiles everything with additional custom gcc FLAGS. This
                     can be used, for example, for specifying extra -D defines.
   --lib=NAME        Build the project as a library instead. NAME specifys the
@@ -290,7 +289,7 @@ def main():
   checkCommandlineOptions(argv)
 
   #Determine maxrecurse(--deplevel).
-  maxrecurse = 15 #default #I personally like to make code I write work with 1(but don't really adhere to it in practice, not with cost/benefit tradeoff), but there are different ideas on where you should place #includes. In most projects 15 is enough to cover them all, and making sure their project compiles is far more important to supermake's objectives than defaulting to enforcing a subjective methodology decision on users.
+  maxrecurse = 15 #default #I personally like to make code I write work with 1(but don't really adhere to it in practice, not worth cost/benefit tradeoff), but there are different ideas on where you should place #includes. In most projects 15 is enough to cover them all, and making sure their project compiles is far more important to supermake's objectives than defaulting to enforcing a subjective methodology decision on users.
   for argument in argv:
     m = re.search('--deplevel=(\d+)', argument) #UNDOCUMENTED FEATURE: --DEPLEVEL
     if m:
