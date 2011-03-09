@@ -19,7 +19,7 @@ Try it out with `supermake --print`, which will automatically generate a makefil
 ### Notes/Troubleshooting
 Supermake is written for python version 3.x, but should work in python 2 as well.
 
-If Supermake fails to recognize some libraries you are using (there unfortunately is no error message on this until the compilation stage), you can manually add them to the 'libraries' datastructure (definition starts on line 71 of supermake.py). Supermake can't support every single library out there, but I try to support the ones I use most myself, at least. Send me your github pull request with the additional library support and I'll gladly accept it.
+If Supermake fails to recognize some libraries you are using (there unfortunately is no error message on this until the compilation stage), you can manually add them to the 'libraries' datastructure (definition near top of supermake.py). Supermake can't support every single library out there, but I try to support the ones I use most myself, at least. Send me your github pull request with the additional library support and I'll gladly accept it.
 
 A known bug with Supermake is that it cannot preproccess potentially disabled blocks of code from `#ifdefs` or `#ifs` and cannot understand c-style comments ('/\*' and '\*/'). This may lead to unwanted library inclusions if you use different libraries in your project depending upon preproccessor `#ifdefs` or `#ifs` or has such includes commented out with c-style comments.
 
