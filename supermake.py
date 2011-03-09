@@ -202,7 +202,7 @@ def getFileDeps(filename, maxrecurse): #takes a sourcefile and finds all #includ
   return deps
 
 
-def BinaryGuessingStrategy_ContainingProjectFolder():
+def BinaryGuessingStrategy_ContainingProjectFolderName():
   #Guessing Strategy: Name the binary after the containing folder (if sourcecode is under 'src' path then it is likely it is part of a larger folder named as the projectname)
   #Eg: if the soruce directory[where supermake was ran from] is at say ~/projects/DeathStar/src/ then this will create the binary at ~/projects/DeathStar/DeathStar.run
   if os.path.basename(os.getcwd()) != 'src':
@@ -238,7 +238,7 @@ def BinaryGuessingStrategy_SingleFileName():
     return splitOnExtension_Mainpart(sourceCodeInDirectory()[0])+'.run'
   return False
   
-def BinaryGuessingStrategy_ParentFolder():
+def BinaryGuessingStrategy_ParentFolderName():
   #Guessing Strategy: Name it after the parent folder.
   return os.path.basename(os.path.realpath('.'))+'.run'
 
@@ -257,13 +257,13 @@ def determineIfAutocleanNeeded(oldMakefile, newMakefile):
   m2 = re.search('^FLAGS = .+$', newMakefile, re.MULTILINE)
   if m2.group() == m1.group():
     m3 = re.search('^CUSTOMFLAGS = .+$', oldMakefile, re.MULTILINE)
-    if not m3: #note that this depends upon the fact that they have already been checked to see if they are identical.
-      return True 
     m4 = re.search('^CUSTOMFLAGS = .+$', newMakefile, re.MULTILINE)
-    if not m4:
-      return True
-    if m4.group() == m3.group():
-      return False
+    if bool(m4) and bool(m3):
+      if m4.group() == m3.group():
+        return False
+    else:
+      if bool(m4) == bool(m3) == False:
+        return False
     return True
   else:
     return True
@@ -290,7 +290,7 @@ def main():
   checkCommandlineOptions(argv)
 
   #Determine maxrecurse(--deplevel).
-  maxrecurse = 15 #default #I personally make code I write work with 1(excluding a lot of things like inheritance -- nevermind), but there are different ideas on where you should place #includes. In most projects 15 is enough to cover them all and making sure their project compiles is far more important to supermake's objectives than defaulting to enforcing a subjective methodology decision on users.
+  maxrecurse = 15 #default #I personally like to make code I write work with 1(but don't really adhere to it in practice, not with cost/benefit tradeoff), but there are different ideas on where you should place #includes. In most projects 15 is enough to cover them all, and making sure their project compiles is far more important to supermake's objectives than defaulting to enforcing a subjective methodology decision on users.
   for argument in argv:
     m = re.search('--deplevel=(\d+)', argument) #UNDOCUMENTED FEATURE: --DEPLEVEL
     if m:
@@ -335,15 +335,15 @@ def main():
       if m:
         binary = m.group(1)
     if binary == '': #'Guess' an acceptable binary name
-      binary = BinaryGuessingStrategy_SingleFileName()
+      binary = BinaryGuessingStrategy_ContainingProjectFolderName()
       if not binary:
-        binary = BinaryGuessingStrategy_ContainingProjectFolder()
+        binary = BinaryGuessingStrategy_GPLDisclaimerName()
         if not binary:
-          binary = BinaryGuessingStrategy_GPLDisclaimerName()
+          binary = BinaryGuessingStrategy_SingleFileName()
           if not binary:
             binary = BinaryGuessingStrategy_RootClassName()
             if not binary:
-              binary = BinaryGuessingStrategy_ParentFolder()
+              binary = BinaryGuessingStrategy_ParentFolderName()
               if not binary:
                 binary = BinaryGuessingStrategy_GenericName()
       message('Guessed a binary name: ' + binary + ' (use --binary=NAME to specify this yourself)')
