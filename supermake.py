@@ -144,7 +144,7 @@ def checkCommandlineOptions(argv):
       binarySpecified = True
       binary = m
 
-  validArgumentRegexPatterns = ['--binary=.+', '--lib=.+', '--deplevel=\d+', '--custom=.+', '--warn', '--debug', '--descrete', '--quiet', '--print', '--make', '--run']
+  validArgumentRegexPatterns = ['--binary=.+', '--lib=.+', '--deplevel=\d+', '--custom=.+', '--warn', '--debug', '--descrete', '--quiet', '--print', '--make', '--run', '--override_depend=.+']
 
   for argument in argv[1:]:
     argumentIsValid = False;
@@ -290,8 +290,8 @@ def main():
 
   #Determine maxrecurse(--deplevel).
   maxrecurse = 15 #default #I personally like to make code I write work with 1(but don't really adhere to it in practice, not worth cost/benefit tradeoff), but there are different ideas on where you should place #includes. In most projects 15 is enough to cover them all, and making sure their project compiles is far more important to supermake's objectives than defaulting to enforcing a subjective methodology decision on users.
-  for argument in argv:
-    m = re.search('--deplevel=(\d+)', argument) #UNDOCUMENTED FEATURE: --DEPLEVEL
+  for arg in argv:
+    m = re.search('--deplevel=(\d+)', arg) #UNDOCUMENTED FEATURE: --DEPLEVEL
     if m:
       maxrecurse = int(m.group(1))
 
@@ -311,6 +311,12 @@ def main():
         deps.insert(0,dep)
         break;
     fileDeps.append((filename, deps))
+    
+    
+  for arg in argv:
+    m = re.search('--override_depend=(.+)', arg) #UNDOCUMENTED FEATURE: --override_depend
+    if m:
+      depend = (m.group(1)).split(' ')
 
   depend = list(set(depend)) #remove duplicates
   depend = sorted(depend) #These alphabetic sorts are just to make the output look nice and consistent.
@@ -368,7 +374,7 @@ def main():
 
   makefile += 'FLAGS ='
 
-  makefile += ' -L/usr/local/include '
+  makefile += ' -L/usr/local/include'
 
   makefile += ' ' + ' '.join(depend)
 
@@ -427,7 +433,7 @@ def main():
 
       needsAutoClean = determineIfAutocleanNeeded(open(oldMakefileFilename, 'r').read(), makefile);
 
-      os.rename(oldMakefileFilename, '/tmp/'+oldMakefileFilename+'.old')
+      os.system('mv '+oldMakefileFilename+' /tmp/'+oldMakefileFilename+'.old')
       message('Warning: Overwriting previous makefile (previous makefile copied to /tmp/'+oldMakefileFilename+'.old in case you weren\'t ready for this!)')
 
     makefileFile = open('makefile', 'w')
