@@ -144,7 +144,7 @@ def checkCommandlineOptions(argv):
       binarySpecified = True
       binary = m
 
-  validArgumentRegexPatterns = ['--binary=.+', '--lib=.+', '--deplevel=\d+', '--custom=.+', '--warn', '--debug', '--descrete', '--quiet', '--print', '--make', '--run', '--override_depend=.+']
+  validArgumentRegexPatterns = ['--binary=.+', '--lib=.+', '--deplevel=\d+', '--custom=.+', '--warn', '--debug', '--descrete', '--quiet', '--print', '--make', '--run', '--override_depend=.+', '--noautoclean', '--oprefix=.+']
 
   for argument in argv[1:]:
     argumentIsValid = False;
@@ -358,6 +358,12 @@ def main():
     m = re.search('--custom=(.+)', argument)
     if m:
       customFlags = m.group(1)
+      
+  oprefix = ''
+  for argument in argv:
+    m = re.search('--oprefix=(.+)', argument)
+    if m:
+      oprefix = m.group(1)
 
   #### Write out the makefile.
   makefile = ''
@@ -366,7 +372,7 @@ def main():
 
   makefile += 'OBJS ='
   for fileDep in fileDeps:
-    makefile += ' ' + splitOnExtension_Mainpart(fileDep[0])+'.o'
+    makefile += ' ' + oprefix+splitOnExtension_Mainpart(fileDep[0])+'.o'
   makefile += '\n'
 
   if customFlags != '':
@@ -410,7 +416,7 @@ def main():
 
 
   for fileDep in fileDeps:
-    objectFileName = splitOnExtension_Mainpart(fileDep[0])+'.o'
+    objectFileName = oprefix+splitOnExtension_Mainpart(fileDep[0])+'.o'
     makefile += objectFileName+': '+fileDep[0]+' '+' '.join(fileDep[1])+'\n'
     makefile += '\t'+compiler+' $(FLAGS) -c '+fileDep[0]+' -o '+objectFileName+'\n\n'
 
@@ -431,7 +437,8 @@ def main():
       elif os.path.exists('Makefile'):
         oldMakefileFilename = 'Makefile'
 
-      needsAutoClean = determineIfAutocleanNeeded(open(oldMakefileFilename, 'r').read(), makefile);
+      if '--noautoclean' not in argv:
+        needsAutoClean = determineIfAutocleanNeeded(open(oldMakefileFilename, 'r').read(), makefile);
 
       os.system('mv '+oldMakefileFilename+' /tmp/'+oldMakefileFilename+'.old')
       message('Warning: Overwriting previous makefile (previous makefile copied to /tmp/'+oldMakefileFilename+'.old in case you weren\'t ready for this!)')
