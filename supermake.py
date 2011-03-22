@@ -144,7 +144,7 @@ def checkCommandlineOptions(argv):
       binarySpecified = True
       binary = m
 
-  validArgumentRegexPatterns = ['--binary=.+', '--lib=.+', '--deplevel=\d+', '--custom=.+', '--warn', '--debug', '--descrete', '--quiet', '--print', '--make', '--run', '--override_depend=.+', '--noautoclean', '--oprefix=.+']
+  validArgumentRegexPatterns = ['--binary=.+', '--lib=.+', '--deplevel=\d+', '--custom=.+', '--warn', '--debug', '--descrete', '--quiet', '--print', '--make', '--run', '--override-depend=.+', '--noautoclean', '--oprefix=.+']
 
   for argument in argv[1:]:
     argumentIsValid = False;
@@ -314,7 +314,7 @@ def main():
     
     
   for arg in argv:
-    m = re.search('--override_depend=(.+)', arg) #UNDOCUMENTED FEATURE: --override_depend
+    m = re.search('--override-depend=(.+)', arg) #UNDOCUMENTED FEATURE: --override-depend
     if m:
       depend = (m.group(1)).split(' ')
 
