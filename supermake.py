@@ -41,6 +41,7 @@ the build proccess.
   --debug         Add the -g and -DDEBUG debug flags to the gcc compilation
                   flags, and, if --run is specified, run it in gdb.
   --warn          Add the -Wall warning flag to the gcc compilation flags.
+  --optimize      Add the -O3 optimization flag to the gcc compilation flags.
   --binary=NAME   Name the binary that the makefile generates. Supermake
                   defaultly just takes a guess.
   --custom=FLAGS  Compiles everything with additional custom gcc FLAGS. This can
@@ -146,7 +147,7 @@ def checkCommandlineOptions(argv):
       binarySpecified = True
       binary = m
 
-  validArgumentRegexPatterns = ['--binary=.+', '--lib=.+', '--deplevel=\d+', '--custom=.+', '--warn', '--debug', '--descrete', '--quiet', '--print', '--make', '--run', '--override-depend=.+', '--noautoclean', '--oprefix=.+']
+  validArgumentRegexPatterns = ['--optimize', '--binary=.+', '--lib=.+', '--deplevel=\d+', '--custom=.+', '--warn', '--debug', '--descrete', '--quiet', '--print', '--make', '--run', '--override-depend=.+', '--noautoclean', '--oprefix=.+']
 
   for argument in argv[1:]:
     argumentIsValid = False;
@@ -391,6 +392,9 @@ def main():
 
   if '--warn' in argv:
     makefile += ' -Wall'
+    
+  if '--optimize' in argv:
+    makefile += ' -O3'
 
   if customFlags != '':
     makefile += ' $(CUSTOMFLAGS)'
