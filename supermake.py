@@ -44,7 +44,7 @@ the build proccess.
   --optimize      Add the -O3 optimization flag to the gcc compilation flags.
   --binary=NAME   Name the binary that the makefile generates. Supermake
                   defaultly just takes a guess.
-  --custom=FLAGS  Compiles everything with additional custom gcc FLAGS. This can
+  --custom=FLAGS  Compile everything with additional custom gcc FLAGS. This can
                   be used, for example, for specifying extra -D defines.
   --lib=NAME      Build the project as a library instead. NAME specifys the name
                   (ex: ../lib/libamazing). This automatically adds both shared
