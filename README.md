@@ -31,6 +31,7 @@ Lastly, it is worth noting that Supermake automatically includes librarys from /
 To use Supermake effectively, you will need to need to create a symbolic link somewhere in your $PATH that points to supermake.py. This allows you to execute the command 'supermake' from any working directory.
 
 Ex (install to /usr/local/bin, using sudo): `sudo mkdir -p /usr/local/bin && sudo ln -s supermake.py /usr/local/bin/supermake`
+
 Ex (install to ~/bin and add ~/bin to $PATH through .bashrc): `mkdir -p ~/bin && ln -s supermake.py ~/bin/supermake && echo 'export PATH="$HOME/bin:$PATH"' >> ~/.bashrc && source ~/.bashrc`
 
 ### Legal
