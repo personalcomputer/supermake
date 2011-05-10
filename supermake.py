@@ -129,7 +129,7 @@ sourceCodeInDirectoryCache = None
 def sourceCodeInDirectory(): #DOES NOT INCLUDE HEADERS
   global sourceCodeInDirectoryCache
   if not sourceCodeInDirectoryCache:
-    sourceCodeInDirectoryCache = sorted([filename for filename in os.listdir('.') if ((not os.path.isdir(filename)) and (filename[-4:] == '.cpp' or filename[-4:] == '.cxx' or filename[-4:] == '.c++' or filename[-3:] == '.cc' or filename[-2:] == '.c'))])
+    sourceCodeInDirectoryCache = sorted([filename for filename in os.listdir('.') if ((not os.path.isdir(filename)) and (filename.endswith('.cpp') or filename.endswith('.cxx') or filename.endswith('.c++') or filename.endswith('.cc') or filename.endswith('.c')))])
   return sourceCodeInDirectoryCache
   
 ####### Helper Functions
@@ -304,11 +304,11 @@ def main():
     message('Error: No sourcecode found. For help see --help.', critical=True)
     sys.exit()
   for filename in sourceCodeInDirectory():
-    if filename[-4:] == '.cpp' or filename[-4:] == '.cxx' or filename[-4:] == '.c++':
+    if filename.endswith('.cpp') or filename.endswith('.cxx') or filename.endswith('.c++'):
       isCCode = False
     deps = sorted(getFileDeps(filename, maxrecurse))
     for depIndex in range(len(deps)):
-      if deps[depIndex][:-2] == filename[:-4]: #This puts the corresponding header file right after the source file. [ie  :monster.cpp monster.h otherstuff.h otherstuff2.h]
+      if deps[depIndex][:-2] == filename[:-4]: #This puts the corresponding header file right after the source file. [ie  :monster.cpp monster.h otherstuff.h otherstuff2.h] #FIXME: Broken with any file extension scheme that has a header extension that isn't 1 character and sourcecode file extension that sin't 3 characters. This feature is only cosmetic though anyways.
         dep = deps[depIndex]
         deps.remove(deps[depIndex])
         deps.insert(0,dep)
@@ -331,7 +331,7 @@ def main():
     if m:
       library = m.group(1)
       basename = os.path.basename(library)
-      if basename[:3] != 'lib':
+      if not basename.startswith('lib'):
         library = os.path.join(os.path.dirname(library), 'lib'+ basename)
         message('Prepending "lib" to the library name: "'+library+'.so", "'+library+'.a".')
 
