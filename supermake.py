@@ -117,7 +117,7 @@ def GetFileFromCache(filename): #This loads and caches all files for speed. (Sup
   return fileCache[filename]
 
 def splitOnExtension(path): #Splits 'example.txt' into ('example', 'txt'), similar in usage to os.path.split.
-  return (path[path.rfind('.'):], path[:path.rfind('.')])
+  return (path[:path.rfind('.')],path[path.rfind('.'):])
   
 sourceCodeInDirectoryCache = None
 
@@ -381,6 +381,7 @@ def main():
 
   makefile += 'OBJS ='
   for fileDep in fileDeps:
+    print(splitOnExtension(fileDep[0]))
     makefile += ' ' + oprefix+splitOnExtension(fileDep[0])[0] + '.o'
   makefile += '\n'
 
