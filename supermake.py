@@ -159,6 +159,10 @@ def checkCommandlineOptions(argv):
     if not argumentIsValid:
       message('Error: Invalid or malformed argument: "'+argument+'". See --help.', critical=True)
       exit(1)
+      
+  if '--run' in argv and os.name != 'posix':
+    message('Error: --run is available only on unix-like platforms.', critical=True)
+    exit(1)
 
   if '--print' in argv and '--make' in argv:
     message('Error: --print and --make specified but --print suppresses writing to makefile.', critical=True)
@@ -294,9 +298,10 @@ def main():
   if '--help' in argv or '-help' in argv or '-h' in argv or '-?' in argv or 'help' in argv or '/h' in argv or '/?' in argv:
     print(usage)
     sys.exit()
-    
-  if sys.hexversion < 0x03000000: #hexversion is used as it is the most compatible with older versions according to http://stackoverflow.com/questions/446052/python-best-way-to-check-for-python-version-in-program-that-uses-new-language-fe/3132402#3132402
-    message('Warning: Your python interpreter is too old, Supermake may therefore perform erratically or crash. Supermake is intended for python 3.0 or newer.')
+  
+  if sys.hexversion < 0x02070000: #hexversion is used as it is the most compatible with older versions according to http://stackoverflow.com/questions/446052/python-best-way-to-check-for-python-version-in-program-that-uses-new-language-fe/3132402#3132402
+    #I don't have any specific reason for putting the cutoff at 2.7, aside from the fact that I don't feel like installing older python versions to test. This was originally at python 3.0, but everything was back-compatible with 2.7 so..
+    message('Warning: Your python interpreter is too old, Supermake may therefore perform erratically or crash. Supermake is intended for at least python 2.7.')
 
   checkCommandlineOptions(argv)
 
