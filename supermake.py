@@ -147,7 +147,7 @@ def checkCommandlineOptions(argv):
       binarySpecified = True
       binary = m
 
-  validArgumentRegexPatterns = ['--optimize', '--binary=.+', '--lib=.+', '--deplevel=\d+', '--custom=.+', '--warn', '--debug', '--discrete', '--quiet', '--print', '--make', '--run', '--override-depend=.+', '--noautoclean', '--oprefix=.+']
+  validArgumentRegexPatterns = ['--optimize', '--binary=.+', '--lib=.+', '--deplevel=\d+', '--custom=.+', '--warn', '--debug', '--discrete', '--quiet', '--print', '--make', '--run', '--override-depend', '--noautoclean', '--oprefix=.+']
 
   for argument in argv[1:]:
     argumentIsValid = False;
@@ -328,12 +328,9 @@ def main():
         deps.insert(0,dep)
         break;
     fileDeps.append((filename, deps))
-    
-    
-  for arg in argv:
-    m = re.search('--override-depend=(.+)', arg) #UNDOCUMENTED FEATURE: --override-depend
-    if m:
-      depend = (m.group(1)).split(' ')
+  
+  if '--override-depend' in argv: #UNDOCUMENTED FEATURE: --override-depend
+    depend = []
 
   depend = list(set(depend)) #remove duplicates
   depend = sorted(depend) #These alphabetic sorts are just to make the output look nice and consistent.
