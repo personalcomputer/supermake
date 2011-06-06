@@ -28,9 +28,9 @@ Supermake is written for python 3, but should (and seems to, from tests) work in
 
 If Supermake fails to recognize some libraries you are using (there unfortunately won't be an error message on this until the compilation stage), you can manually add them to the 'libraries' datastructure (definition near top of supermake.py). Supermake can't support every single library out there, but I try to support the ones I use most myself, at least. Send me your Github pull request with the additional library support and I'll gladly accept it.
 
-A known bug with Supermake is that it cannot preprocess potentially disabled blocks of code from `#ifdefs` or `#ifs` and cannot understand c-style comments ('/\*' and '\*/'). This may lead to unwanted library inclusions if you use different libraries in your project depending upon preprocessor `#ifdefs` or `#ifs` or has such includes commented out with C-style comments.
+A known bug with Supermake is that it cannot preprocess potentially disabled blocks of code from `#ifdefs` or `#ifs` and cannot understand c-style comments ('/\*' and '\*/'). This may lead to unwanted library inclusions if you use different libraries in your project depending upon preprocessor `#ifdefs` or `#ifs` or has such includes commented out with C-style comments. The undocumented `--override-depend=-llibrarya -llibraryb` workaround is available if this bug is causing problems.
 
-Another known issue is that Supermake will not acknowledge source files (.cpp and .c) not in the current directory. Changing this would require an overhaul of the fundamental design (requiring manually specifying files, etc).
+Another known issue is that Supermake will not acknowledge source files (.cpp and .c) not in the current directory. Support for recursively adding source files in subdirectories is soon to come though, but will be limited in that there will be no way to choose which subdirectories to include or omit. This is a fundamental design choice though, in line with the inability to choose which individual source files to include.
 
 Lastly, it is worth noting that Supermake automatically includes libraries from /usr/local/lib, and then if `--run` is specified it sets LD_LIBRARY_PATH accordingly as well.
 
