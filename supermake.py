@@ -294,7 +294,7 @@ def main():
     print(usage)
     sys.exit()
   
-  if sys.hexversion < 0x02070000: #hexversion is used as it is the most compatible with older versions according to http://stackoverflow.com/questions/446052/python-best-way-to-check-for-python-version-in-program-that-uses-new-language-fe/3132402#3132402
+  if sys.hexversion < 0x02070000: #hexversion is used because it is the most compatible with older versions according to http://stackoverflow.com/questions/446052/python-best-way-to-check-for-python-version-in-program-that-uses-new-language-fe/3132402#3132402
     #I don't have any specific reason for putting the cutoff at 2.7, aside from the fact that I don't feel like installing older python versions to test. This was originally at python 3.0, but everything was back-compatible with 2.7 so..
     message('Warning: Your python interpreter is too old, Supermake may therefore perform erratically or crash. Supermake is intended for at least python 2.7.')
 
@@ -307,7 +307,7 @@ def main():
     if m:
       maxrecurse = int(m.group(1))
 
-  #Find sourcefiles and acquire their dependencies(Supermake considers a file to depend upon another if it is #included)
+  #### Find sourcefiles and acquire their dependencies(Supermake considers a file to depend upon another if it is #included)
   hasSourceFiles = False
   if len(sourceCodeInDirectory()) <= 0:
     message('Error: No sourcecode found. For help see --help.', critical=True)
@@ -317,7 +317,7 @@ def main():
       isCCode = False
     deps = sorted(getFileDeps(filename, maxrecurse))
     for depIndex in range(len(deps)):
-      if splitOnExtension(deps[depIndex])[0] == splitOnExtension(filename)[0]: #This puts the corresponding header file right after the source file. [Eg :monster.cpp monster.h otherstuff.h otherstuff2.h] #FIXME: Broken with any file extension scheme that has a header extension that isn't 1 character and sourcecode file extension that sin't 3 characters. This feature is only cosmetic though anyways.
+      if splitOnExtension(deps[depIndex])[0] == splitOnExtension(filename)[0]: #This puts the corresponding header file right after the source file. [Eg :monster.cpp monster.h otherstuff.h otherstuff2.h]
         dep = deps[depIndex]
         deps.remove(deps[depIndex])
         deps.insert(0,dep)
