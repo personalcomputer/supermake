@@ -14,14 +14,12 @@
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 #
-#
-#
-# The objective of Supermake is to be a simple user-friendly makefile generator that attempts its best to figure out what the user wants with well thought out defaults that work for most basic compilation needs. Additionally supermake provides the option to automatically perform the rest of the build process, even launching the resultant binary for you! I feel that supermake is fairly mature and accomplishes its objective.
+# The objective of Supermake is to be a simple user-friendly makefile generator that attempts its best to figure out what the user wants with well thought out aggressive defaults that work for most basic compilation needs. Additionally supermake provides the option to automatically perform the rest of the build process, even launching the resultant binary for you! I feel that supermake is now fairly mature and accomplishes this objective.
 #
 # Supermake is created by personalcomputer <https://github.com/personalcomputer>
 #
-# This is python 3 code, but it should also be mostly back-compatible with python 2.
-# TESTED ON LINUX ONLY
+# This is python 3 code written to be fully back-compatible with python 2.7 as well.
+# Lots, of this is unix-like only (possibly even linux only), but it should be fairly simple to get the resulting makefiles to work with mingw.
 
 import re
 import os
@@ -117,12 +115,9 @@ def GetFileFromCache(filename): #This loads and caches all files for speed. (Sup
     fileCache[filename] = f.read()
     f.close()
   return fileCache[filename]
-  
-def splitOnExtension_Extension(path):
-  return path[path.rfind('.'):]
-  
-def splitOnExtension_Mainpart(path):
-  return path[:path.rfind('.')]
+
+def splitOnExtension(path): #Splits 'example.txt' into ('example', 'txt'), similar in usage to os.path.split.
+  return (path[path.rfind('.'):], path[:path.rfind('.')])
   
 sourceCodeInDirectoryCache = None
 
@@ -250,7 +245,7 @@ def BinaryGuessingStrategy_RootClassName():
 def BinaryGuessingStrategy_SingleFileName():
   #Guessing Strategy: If there is only one source file, name it after that.
   if len(sourceCodeInDirectory()) == 1:
-    return splitOnExtension_Mainpart(sourceCodeInDirectory()[0])+'.run'
+    return splitOnExtension(sourceCodeInDirectory()[0])[0] + '.run'
   return False
   
 def BinaryGuessingStrategy_ParentFolderName():
@@ -322,7 +317,7 @@ def main():
       isCCode = False
     deps = sorted(getFileDeps(filename, maxrecurse))
     for depIndex in range(len(deps)):
-      if deps[depIndex][:-2] == filename[:-4]: #This puts the corresponding header file right after the source file. [Eg :monster.cpp monster.h otherstuff.h otherstuff2.h] #FIXME: Broken with any file extension scheme that has a header extension that isn't 1 character and sourcecode file extension that sin't 3 characters. This feature is only cosmetic though anyways.
+      if splitOnExtension(deps[depIndex])[0] == splitOnExtension(filename)[0]: #This puts the corresponding header file right after the source file. [Eg :monster.cpp monster.h otherstuff.h otherstuff2.h] #FIXME: Broken with any file extension scheme that has a header extension that isn't 1 character and sourcecode file extension that sin't 3 characters. This feature is only cosmetic though anyways.
         dep = deps[depIndex]
         deps.remove(deps[depIndex])
         deps.insert(0,dep)
@@ -386,7 +381,7 @@ def main():
 
   makefile += 'OBJS ='
   for fileDep in fileDeps:
-    makefile += ' ' + oprefix+splitOnExtension_Mainpart(fileDep[0])+'.o'
+    makefile += ' ' + oprefix+splitOnExtension(fileDep[0])[0] + '.o'
   makefile += '\n'
 
   if customFlags != '':
@@ -439,7 +434,7 @@ def main():
 
 
   for fileDep in fileDeps:
-    objectFileName = oprefix+splitOnExtension_Mainpart(fileDep[0])+'.o'
+    objectFileName = oprefix+splitOnExtension(fileDep[0])[0] + '.o'
     makefile += objectFileName+': '+fileDep[0]+' '+' '.join(fileDep[1])+'\n'
     makefile += '\t'+compiler+' $(FLAGS) -c '+fileDep[0]+' -o '+objectFileName+'\n\n'
 
@@ -447,11 +442,12 @@ def main():
     makefile += 'clean:\n\trm -f '+binary+' *.o'
   else:
     makefile += 'clean:\n\trm -f '+library+'.a '+library+'.so *.o'
-  #### Makefile has now been written out
+  #### Makefile contents have now been written out
 
   if '--print' in argv:
     print(makefile)
   else:
+    #Determine if  `make clean` is needed
     needsAutoClean = False
     if os.path.exists('makefile') or os.path.exists('Makefile'):
       oldMakefileFilename = ''
