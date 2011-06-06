@@ -17,11 +17,9 @@ Try it out with `supermake --print`, which will automatically generate a makefil
 * Build static and dynamic libraries.
 
 ### Example Usage
-`supermake` (Really. Supermake is designed to do everything for you automatically with aggressive defaults. Add `--make` and `--run` to this and boom, you go straight from sourcecode to running software.)
-
-`supermake --binary=../bin/myprogram.run --debug --warn --make`
-
-`supermake --binary=myprogram.run --make --run`
+* `supermake` (Really. Supermake is designed to do everything for you automatically with aggressive defaults. Add `--make` and `--run` to this and boom, you go straight from sourcecode to running software.)
+* `supermake --binary=../bin/myprogram.run --debug --warn --make`
+* `supermake --binary=myprogram.run --make --run`
 
 **Again, for full proper usage information, see `supermake --help`.**
 
