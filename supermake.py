@@ -35,7 +35,7 @@ directory and optionally compile and execute it, streamlining and simplifying
 the build process.
 
   --print         Print to the console instead of writing to a makefile.
-  --make          'make' the generated makefile. IE: compile the project.
+  --make          'make' the generated makefile (compile the project).
   --run           Execute the compiled binary. Only to be used in combination
                   with --make.
   --debug         Add the -g and -DDEBUG debug flags to the gcc compilation
@@ -197,10 +197,19 @@ def getFileDeps(filename, maxrecurse): #takes a source file and finds all #inclu
       depend.extend(libraries[case])
     else:
       if case not in deps:
-        if os.path.exists(case): #otherwise it is like #include "stdlib.h"
-          deps.append(os.path.join(os.path.split(filename)[0], os.path.normpath(case))) #Add the found file dependency, with proper directory
-          deps.extend(getFileDeps(case, maxrecurse))
-          deps = list(set(deps))
+        if os.path.exists(case):
+          case = case
+        elif os.path.exists(os.path.join('include',case)): #You might say this is hacky, but it fully follows the philosohpy of Supermake. Supermake is not a do-everything super-configurable makefile generator, it is designed only to work with usual situations (But work well!). #Making this not hacky would, of course, required multi-directory support, something I've thought about before, and probally will still eventualy add.
+          case = os.path.join('include',case)
+        elif os.path.exists(os.path.join('../include',case)):
+          case = os.path.join('../include',case)
+        else: #otherwise it is like #include "stdlib.h"
+          continue 
+        
+        deps.append(os.path.join(os.path.split(filename)[0], os.path.normpath(case))) #Add the found file dependency, with proper directory
+        deps.extend(getFileDeps(case, maxrecurse))
+        deps = list(set(deps))
+          
   return deps
 
 
@@ -308,7 +317,7 @@ def main():
       isCCode = False
     deps = sorted(getFileDeps(filename, maxrecurse))
     for depIndex in range(len(deps)):
-      if deps[depIndex][:-2] == filename[:-4]: #This puts the corresponding header file right after the source file. [ie  :monster.cpp monster.h otherstuff.h otherstuff2.h] #FIXME: Broken with any file extension scheme that has a header extension that isn't 1 character and sourcecode file extension that sin't 3 characters. This feature is only cosmetic though anyways.
+      if deps[depIndex][:-2] == filename[:-4]: #This puts the corresponding header file right after the source file. [Eg :monster.cpp monster.h otherstuff.h otherstuff2.h] #FIXME: Broken with any file extension scheme that has a header extension that isn't 1 character and sourcecode file extension that sin't 3 characters. This feature is only cosmetic though anyways.
         dep = deps[depIndex]
         deps.remove(deps[depIndex])
         deps.insert(0,dep)
@@ -384,6 +393,12 @@ def main():
   makefile += 'FLAGS ='
 
   makefile += ' -L/usr/local/include'
+  
+  #Add the include directory, if in use. 
+  if os.path.exists('include'):
+    makefile += ' -Iinclude'
+  if os.path.exists('../include'):
+    makefile += ' -I../include'
 
   makefile += ' ' + ' '.join(depend)
 
