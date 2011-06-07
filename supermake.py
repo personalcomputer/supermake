@@ -381,7 +381,6 @@ def main():
 
   makefile += 'OBJS ='
   for fileDep in fileDeps:
-    print(splitOnExtension(fileDep[0]))
     makefile += ' ' + oprefix+splitOnExtension(fileDep[0])[0] + '.o'
   makefile += '\n'
 
