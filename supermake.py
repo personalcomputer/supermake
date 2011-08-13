@@ -390,7 +390,9 @@ class Makefile:
       makefile += 'clean:\n\trm -f '+self._libraryName+'.a '+self._libraryName+'.so *.o'
     else:
       makefile += 'clean:\n\trm -f '+self._binaryName+' *.o'
-      
+    
+    makefile += '\n'
+    
     return makefile
     
   def SetDebug(self, debug):
