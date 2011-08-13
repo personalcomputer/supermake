@@ -234,6 +234,9 @@ class CodeFile:
   
   def GetDirectory(self):
     return self._directory
+    
+  def GetContent(self):
+    return self._content
   
   def __str__(self):
     return 'Codefile: '+self.GetFullPath()
@@ -307,8 +310,8 @@ class Makefile:
       return binaryName
 
     #Guessing Strategy: Look for the common GPL disclaimer and name it after the specified project name.
-    for filename in self.SourceCodeInDirectory():
-      m = re.search('\s*(.+) is free software(?:;)|(?::) you can redistribute it and/or modify', GetFileFromCache(filename))
+    for codeFile in self._sourceCodeFiles:
+      m = re.search('\s*(.+) is free software(?:;)|(?::) you can redistribute it and/or modify', codeFile.GetContent())
       if m:
         if m.group(1) != 'This program' and m.group(1) != 'This software':
           return m.group(1)
@@ -316,7 +319,7 @@ class Makefile:
 
     #Guessing Strategy: If there is only one source file, name it after that.
     if len(self.SourceCodeInDirectory()) == 1:
-      return fileExtension(self.SourceCodeInDirectory()[0]) + '.run'
+      return fileName(self.SourceCodeInDirectory()[0]) + '.run'
     
     #Guessing Strategy: Name it after the parent folder.
     return os.path.basename(os.path.realpath('.'))+'.run'
@@ -344,7 +347,7 @@ class Makefile:
     CFlags += ' ' + ' '.join(self._libraryDependencies)
 
     if self._debug:
-      CFlags += ' -g -DDEBUG'# -pg'
+      CFlags += ' -g -DDEBUG'# -pg' #-lprofiler #You'll have to use `--custom` guys
 
     if self._warn:
       CFlags += ' -Wall'
@@ -420,7 +423,7 @@ class Makefile:
   def __str__(self):
     return self.Generate()
     
-class Options: #Attempted to overengineer this way too many times. #struct
+class Options: #Attempted to overengineer this way too many times, still want to do it again because I really don't like this 'solution' #struct
   '''Commandline options given to Supermake'''
   
   def __init__(self, cliArguments = None):
@@ -611,25 +614,10 @@ class Supermake:
             #subprocess.Popen(['gdb', binaryFilename], cwd=binaryParentFolder) #What am I doing wrong? Checked documentation and everything seems in line. 
           else:
             os.system('cd '+binaryParentFolder+' && ./'+binaryFilename)
-            #subprocess.Popen(['./'+binaryFilename], cwd=binaryParentFolder) #This works. Just it shouldn't according to the documentation so I have no idea what is going on. Better left commented out..
+            #subprocess.Popen(['./'+binaryFilename], cwd=binaryParentFolder) #This works. Just it shouldn't according to the documentation (?!?!?!) so I have no idea what is going on. Better left commented out.
 
     except SupermakeError as e:
       messenger.ErrorMessage(e.What()) 
-    
-  def SaveMakefile(self):
-    pass
-  
-  def DetermineIfAutocleanNeeded(self,oldMakefileContent, newMakefile):
-    pass
-
-  def SanitizeBuildEnvironment(self,newMakefile):
-    pass
-
-  def Build(self):
-    pass
-
-  def RunBuild(self):
-    pass
  
 if __name__ == '__main__':
   Supermake()
