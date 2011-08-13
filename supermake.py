@@ -611,13 +611,20 @@ class Supermake:
         # Run
         if self._options.run:
           (binaryParentFolder, binaryFilename) = os.path.split(makefile.GetBuildName())
+          
+          #gdb calling is broken. Need to make the input get passed to gdb
           if self._options.debug:
-            os.system('cd '+binaryParentFolder+' && gdb ./'+binaryFilename)
-            #subprocess.Popen(['gdb', binaryFilename], cwd=binaryParentFolder) #What am I doing wrong? Checked documentation and everything seems in line. 
+            #os.system('cd '+binaryParentFolder+' && gdb ./'+binaryFilename)
+            if binaryParentFolder:
+              subprocess.Popen(['gdb', binaryFilename], cwd=binaryParentFolder)
+            else:
+              subprocess.Popen(['gdb', binaryFilename])
           else:
-            os.system('cd '+binaryParentFolder+' && ./'+binaryFilename)
-            #subprocess.Popen(['./'+binaryFilename], cwd=binaryParentFolder) #This works. Just it shouldn't according to the documentation (?!?!?!) so I have no idea what is going on. Better left commented out.
-
+            if binaryParentFolder:
+              subprocess.Popen(['./'+binaryFilename], cwd=binaryParentFolder)
+            else:
+              subprocess.Popen(['./'+binaryFilename])
+            
     except SupermakeError as e:
       messenger.ErrorMessage(e.What()) 
  
