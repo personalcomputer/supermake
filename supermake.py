@@ -60,7 +60,7 @@ the build process.
 
 Ex: supermake
 Ex: supermake --binary=../bin/myprogram.run --debug --warn --make
-Ex: supermake --binary=myprogram.run --make --run.''' #Genning this needs to be automated. DRY etc
+Ex: supermake --binary=myprogram.run --make --run.'''
 
 helpArguments = set(['--help', '-help', '-h', 'h', '-?', 'help', '/h', '/?', '?', 'HELP'])
 
@@ -98,15 +98,15 @@ libraries = { #There are a lot of problems with the current approach, but this i
 
 librarydirs = { #These are library header->lib mappings just like 'libraries', except it operates at the directory level, so every little header doesn't have to have a separate entry. If this was C, I'd soooo be using gperf for all of this. Would be much more elegant and much faster. I have no problem programmaticly specifying hundreds of headers to gperf.
   'OGRE': ['-lOgreMain'],
-  'gtk': ['`pkg-config --cflags --libs gtk+-2.0`'],
+  'gtk': ['`pkg-config --cflags --libs gtk+-2.0`'], #Sorry, no 3.0 support. Supermake simply is not capable or designed to support multiple library versions. (but it will only take changing a single character if you need it..)
   'OIS': ['-lOIS'],
   'SDL': ['`sdl-config --libs`'],
-  'gtkmm': ['`pkg-config gtkmm-2.4 --cflags --libs`'], #Sorry, no 3.0 support. Supermake simply is not capable or designed to support multiple library versions.
+  'gtkmm': ['`pkg-config gtkmm-2.4 --cflags --libs`'],
   'GL': ['-lGL'],
   'Horde3D': ['-lHorde3D'],
 }
 
-# constants that should be part of CodeFile but python is a fucking inept piece of shit (I'm not fucking referring to a constant with 'self.' prepending)
+# constants that should be part of CodeFile but python is lame.
 c_source_extensions      = set(['c'])
 c_header_extensions      = set(['h'])
 cpp_source_extensions    = set(['c++', 'cc', 'cpp', 'cxx'])
@@ -348,7 +348,7 @@ class Makefile:
     makefile = ''
     makefile += 'OBJS = '
 
-    makefile += ' '.join(os.path.join(sourceCodeFile.GetDirectory(), self._objPrefix+sourceCodeFile.GetName()+'.o') for sourceCodeFile in self._sourceCodeFiles)
+    makefile += ' '.join(os.path.join(sourceCodeFile.GetDirectory(), self._objPrefix+sourceCodeFile.GetName()+'.o') for sourceCodeFile in sorted(self._sourceCodeFiles, key=CodeFile.GetFullPath))
     
     makefile += '\n'
 
