@@ -56,7 +56,7 @@ the build process.
                   message at the top of the makefile.
   --args          Pass all arguments after the --args arg to the binary when
                   using --run. (Ex: `supermake --make --run --args 5 4` passes
-                  '5' and '4' to the binary when it is ran through --run)
+                  '5' and '4' to the binary when it is run through --run)
 
 Ex: supermake
 Ex: supermake --binary=../bin/myprogram.run --debug --warn --make
@@ -76,6 +76,8 @@ libraries = { #There are a lot of problems with the current approach, but this i
   'SDL/SDL_ttf.h': ['-lSDL_ttf', '`sdl-config --libs`'],
   'SDL/SDL_net.h': ['-lSDL_net', '`sdl-config --libs`'],
   'SDL/SDL_thread.h': ['-lSDL', '-pthread'],
+  'gtkmm.h': ['`pkg-config gtkmm-2.4 --cflags --libs`'], #Sorry, no 3.0 support. Supermake simply is not capable or designed to support multiple library versions.
+  'gtk/gtk.h': ['`pkg-config --cflags --libs gtk+-2.0`'], 
   'GL/glfw.h': ['-lGL', '-lX11', '-lXrandr', '-pthread', '-lglfw'],
   'Box2D.h': ['-lbox2d'],
   'openssl/sha.h': ['-lcrypto'],
@@ -428,7 +430,7 @@ class Makefile:
   def __str__(self):
     return self.Generate()
     
-class Options: #Attempted to overengineer this way too many times, still want to do it again because I don't really like this solution #struct
+class Options: #Attempted to overengineer this way too many times, still want to do it again because I don't really like this solution
   '''Commandline options given to Supermake'''
   
   def __init__(self, cliArguments = None):
@@ -589,7 +591,7 @@ class Supermake:
           if oldMakefileContent == makefileContent:
             needsAutoClean = False
           else:
-            #Simply look to see if $FLAGS differ. Simple, faulty, oh well.
+            #Simply look to see if $FLAGS differs. Simple, faulty, oh well.
             m1 = re.search('^FLAGS = .+$', oldMakefileContent, re.MULTILINE)
             if not m1:
               needsAutoClean = True
