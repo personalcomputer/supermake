@@ -78,13 +78,12 @@ libraries = { #There are a lot of problems with the current approach, but this i
   'ncurses.h': ['-lncurses'],
   'google/profiler.h': ['-lprofiler'],
   
-  'SDL/SDL.h': ['`sdl-config --libs`'],
   'SDL/SDL_image.h': ['-lSDL_image'],
   'SDL/SDL_mixer.h': ['-lSDL_mixer'],
   'SDL/SDL_opengl.h': ['-lGL'],
   'SDL/SDL_ttf.h': ['-lSDL_ttf'],
   'SDL/SDL_net.h': ['-lSDL_net'],
-  'SDL/SDL_thread.h': ['-lSDL', '-pthread'],
+  'SDL/SDL_thread.h': ['-pthread'],
   
   'gtkmm.h': ['`pkg-config gtkmm-2.4 --cflags --libs`'], 
   
