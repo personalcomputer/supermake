@@ -290,6 +290,7 @@ class Makefile:
     self._objPrefix = ''
     self._customCFlags = set([])
     self._libraryDependencies = set([])
+    self._language = 'unknown'
     
     if not self.SourceCodeInDirectory():
       raise SupermakeError('No sourcecode found. For help see --help.')
@@ -311,6 +312,10 @@ class Makefile:
       
     for codeFile in self._sourceCodeFiles:
       self._libraryDependencies |= codeFile.GetLibraryDependencies()
+    
+    self._language = 'c'
+    if 'c++' in [sourceCodeFile.GetLanguage() for sourceCodeFile in codeFilesStore] or 'c++' in [sourceCodeFile.GetLanguage() for sourceCodeFile in self._sourceCodeFiles]:
+      self._language = 'c++'
 
   def GuessBuildName(self):
     '''Guess what the project is called based off of heuristics involving surrounding files and directory names.'''
@@ -378,9 +383,7 @@ class Makefile:
 
     makefile += 'FLAGS = ' + CFlags + '\n\n'
 
-    compiler = 'gcc'
-    if 'c++' in [sourceCodeFile.GetLanguage() for sourceCodeFile in self._sourceCodeFiles]:
-      compiler = 'g++'
+    compiler = {'c++':'g++','c':'gcc'}[self._language] #python! :D?
     
     if self._libraryName:
       makefile += 'all: '+self._libraryName+'.a '+self._libraryName+'.so\n\n'
