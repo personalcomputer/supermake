@@ -98,7 +98,10 @@ libraries = { #There are a lot of problems with the current approach, but this i
   'boost/regex.hpp': ['-lboost_regex'],
   'boost/filesystem': ['-lboost_filesystem'],
   'boost/serialization': ['-lboost_serialization'],
-  'boost/signal': ['-lboost_signals']
+  'boost/signal': ['-lboost_signals'],
+  'boost/thread': ['-lboost_thread'],
+  'boost/program_options/': ['-lboost_program_options'],
+  'boost/mpi': ['-lboost_mpi'],
 
   'OGRE/': ['-lOgreMain'],
   
