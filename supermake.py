@@ -206,10 +206,10 @@ class CodeFile:
     
     self._content = open(self.GetFullPath(), 'r').read()
     
-    m = re.findall(r'^#include <(.+?)>$', self._content, re.MULTILINE) #Warning, if #includes are commented out using C comments(/* */), they will still be included.  I don't know how to avoid this using regex, probably not possible with just regex. TODO
+    m = re.findall(r'^#include <(.+?)>', self._content, re.MULTILINE) #Warning, if #includes are commented out using C comments(/* */), they will still be included.  I don't know how to avoid this using regex, probably not possible with just regex. TODO
     for header in m:
       self._libraryDependencies.update(getLibs(header))
-    m = re.findall(r'^#include "(.+?)"$', self._content, re.MULTILINE)
+    m = re.findall(r'^#include "(.+?)"', self._content, re.MULTILINE)
     for header in m:
       headerDeps = getLibs(header)
       if headerDeps: #Whole thing here is silly. Why doesn't python respect the assignment operator as a real operator with a return value?
