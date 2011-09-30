@@ -661,7 +661,7 @@ class Supermake:
           
           if binaryParentFolder:
             #subprocess.Popen(cmdargs, cwd=binaryParentFolder) #This doesn't properly pipe the terminal stdin to gdb and I don't know how to resolve that, so using os.system for now.
-            os.system('cd '+binaryParentFolder+' '+' '.join(cmdargs))
+            os.system('cd '+binaryParentFolder+' &&'+' '.join(cmdargs))
           else:
             #subprocess.Popen(cmdargs)
             os.system(' '.join(cmdargs))
