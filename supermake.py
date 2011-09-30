@@ -60,7 +60,7 @@ the build process.
 
 Ex: supermake
 Ex: supermake --binary=../bin/myprogram.run --debug --warn --make
-Ex: supermake --binary=myprogram.run --make --run.'''
+Ex: supermake --binary=myprogram.run --make --run'''
 
 helpArguments = set(['--help', '-help', '-h', 'h', '-?', 'help', '/h', '/?', '?', 'HELP'])
 
@@ -95,6 +95,7 @@ libraries = { #There are a lot of problems with the current approach, but this i
   'Horde3D/': ['-lHorde3D'],
   'Horde3D/Horde3DUtils.h': ['-lHorde3DUtils'],
   
+  'boost/': ['-lboost_system'],
   'boost/regex.hpp': ['-lboost_regex'],
   'boost/filesystem': ['-lboost_filesystem'],
   'boost/serialization': ['-lboost_serialization'],
@@ -330,7 +331,7 @@ class Makefile:
     if os.path.basename(os.getcwd()) == 'src' or os.path.basename(os.getcwd()) == 'source':
       binaryName = os.path.basename(os.path.realpath('..')) + '.run'
       if os.path.isdir('../bin'):
-        binaryName = '..bin/'+binaryName
+        binaryName = '../bin/'+binaryName
       elif os.path.isdir('./bin'):
         binaryName = './bin/'+binaryName
       else:
