@@ -655,21 +655,16 @@ class Supermake:
             cmdargs.append('./'+binaryFilename)
             if self._options.binaryArgs:
               cmdargs.extend(self._options.binaryArgs)
-            
-            if binaryParentFolder:
-              #subprocess.Popen(cmdargs, cwd=binaryParentFolder) #This doesn't properly pipe the terminal stdin to gdb and I don't know how to resolve that, so using os.system for now.
-              os.system('cd '+binaryParentFolder+' '+' '.join(cmdargs))
-            else:
-              #subprocess.Popen(cmdargs)
-              os.system(' '.join(cmdargs))
           else:
             cmdargs = ['./'+binaryFilename]
             cmdargs.extend(self._options.binaryArgs)
           
-            if binaryParentFolder:
-              subprocess.Popen(cmdargs, cwd=binaryParentFolder)
-            else:
-              subprocess.Popen(cmdargs)
+          if binaryParentFolder:
+            #subprocess.Popen(cmdargs, cwd=binaryParentFolder) #This doesn't properly pipe the terminal stdin to gdb and I don't know how to resolve that, so using os.system for now.
+            os.system('cd '+binaryParentFolder+' '+' '.join(cmdargs))
+          else:
+            #subprocess.Popen(cmdargs)
+            os.system(' '.join(cmdargs))
             
     except SupermakeError as e:
       messenger.ErrorMessage(e.What()) 
