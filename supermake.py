@@ -37,6 +37,7 @@ the build process.
   --make          'make' the generated makefile (compile the project).
   --run           Execute the compiled binary. Only to be used in combination
                   with --make.
+  --recurse, -R   Recursively add source code from subdirectories as well.
   --debug         Add the -g and -DDEBUG debug flags to the gcc compilation
                   flags, and, if --run is specified, run it in gdb.
   --warn          Add the -Wall warning flag to the gcc compilation flags.
@@ -286,9 +287,9 @@ class CodeFilesStore(set): #more expensive than it should be. Todo: Separation o
 class Makefile:
   '''An abstract representation of a makefile suitable for conversion to a real makefile through Generate()'''  
   
-  def __init__(self):
+  def __init__(self, sourceCodeFiles):
     '''Initialize a representation of a makefile for the project at the current path (ideally, provided directory, but not in first revision), determining all the needed info about the project and its internals needed to proceed to generate the final output makefile.'''
-    self._sourceCodeFiles = []
+    self._sourceCodeFiles = sourceCodeFiles
     self._debug = False
     self._warn = False
     self._optimize = False
@@ -298,31 +299,6 @@ class Makefile:
     self._customCFlags = set([])
     self._libraryDependencies = set([])
     self._language = 'unknown'
-    
-    if not self.SourceCodeInDirectory():
-      raise SupermakeError('No sourcecode found. For help see --help.')
-    
-    self.Crawl()
-    
-  def SourceCodeInDirectory(self):
-    return [filePath for filePath in os.listdir('.') if fileExtension(filePath) in all_source_extensions]
-
-  def Crawl(self):
-    '''Crawl, picking up all code files to generate a representation of all the code files and their dependencies.'''
-    codeFilesStore = CodeFilesStore() #Should only be headers
-    
-    for filepath in self.SourceCodeInDirectory():
-      try:
-        self._sourceCodeFiles.append(CodeFile(filepath, codeFilesStore))
-      except NotCodeError:
-        pass
-      
-    for codeFile in self._sourceCodeFiles:
-      self._libraryDependencies |= codeFile.GetLibraryDependencies()
-    
-    self._language = 'c'
-    if 'c++' in [sourceCodeFile.GetLanguage() for sourceCodeFile in codeFilesStore] or 'c++' in [sourceCodeFile.GetLanguage() for sourceCodeFile in self._sourceCodeFiles]:
-      self._language = 'c++'
 
   def GuessBuildName(self):
     '''Guess what the project is called based off of heuristics involving surrounding files and directory names.'''
@@ -446,8 +422,11 @@ class Makefile:
   def SetCustomCFlags(self, customCFlags):
     self._customCFlags = customCFlags
     
-  def ClearLibraryDependencies(self):
-    self._libraryDependencies = set([])
+  def SetLibraryDependencies(self, libraryDependencies):
+    self._libraryDependencies = libraryDependencies
+    
+  def SetLanguage(self, language):
+    self._language = language
   
   def __str__(self):
     return self.Generate()
@@ -456,6 +435,7 @@ class Options: #Attempted to overengineer this way too many times, still want to
   '''Commandline options given to Supermake'''
   
   def __init__(self, cliArguments = None):
+    self.recurse = False
     self.debug = False
     self.warn = False
     self.optimize = False
@@ -500,6 +480,10 @@ class Options: #Attempted to overengineer this way too many times, still want to
       arguments = arguments[:arguments.index('--args')]
     
     for argument in arguments:
+      if argument == '--recurse' or argument == '-R':
+        self.recurse = True
+        continue
+      
       if argument == '--debug':
         self.debug = True
         continue
@@ -576,7 +560,36 @@ class Supermake:
         sys.exit(0)
       self._options = Options(arguments)
       
-      makefile = Makefile()
+      if not [filePath for filePath in os.listdir('.') if fileExtension(filePath) in all_source_extensions]:
+        raise SupermakeError('No sourcecode found. For help see --help.')
+
+      # Crawl, picking up all code files to generate a representation of all the code files and their dependencies.
+      sourceCodeFiles = [] #actual source files, .cpp, .c, etc. Supermake makes a distinction between 'header' files and 'source' files.
+      codeFilesStore = CodeFilesStore() #Should only be headers
+
+      sourceHierarchy = []
+      if self._options.recurse:
+        sourceHierarchy = [(directory, filenames) for (directory, unused, filenames) in os.walk('.')]
+      else:
+        sourceHierarchy = [('.', os.listdir('.'))]
+
+      for directory, filenames in sourceHierarchy:
+        for filepath in [os.path.join(directory, filename) for filename in filenames if fileExtension(filename) in all_source_extensions]:
+          try:
+            sourceCodeFiles.append(CodeFile(filepath, codeFilesStore))
+          except NotCodeError:
+            pass
+      
+      libraryDependencies = set([])
+      for codeFile in sourceCodeFiles:
+        libraryDependencies |= codeFile.GetLibraryDependencies()
+
+      language = 'c'
+      if 'c++' in [sourceCodeFile.GetLanguage() for sourceCodeFile in codeFilesStore] or 'c++' in [sourceCodeFile.GetLanguage() for sourceCodeFile in sourceCodeFiles]:
+        language = 'c++'
+      
+      # Init and Generate Makefile
+      makefile = Makefile(sourceCodeFiles)
       
       makefile.SetDebug(self._options.debug)
       makefile.SetWarn(self._options.warn)
@@ -584,8 +597,11 @@ class Supermake:
       makefile.SetBuildName(self._options.binaryName)
       makefile.SetLibraryName(self._options.libraryName)
       makefile.SetObjPrefix(self._options.objPrefix)
-      if self._options.overrideLibraryDependencies:
-        makefile.ClearLibraryDependencies()
+      makefile.SetLanguage(language)
+      if not self._options.overrideLibraryDependencies:
+        makefile.SetLibraryDependencies(libraryDependencies)
+      else:
+        makefile.SetLibraryDependencies(set([]))
       makefile.SetCustomCFlags(self._options.customCFlags)
       
       if self._options.quiet:

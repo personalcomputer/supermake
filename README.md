@@ -30,8 +30,6 @@ If Supermake fails to recognize some libraries you are using (there unfortunatel
 
 A known bug with Supermake is that it cannot preprocess potentially disabled blocks of code from `#ifdefs` or `#ifs` and cannot understand c-style comments ('/\*' and '\*/'). This may lead to unwanted library inclusions if you use different libraries in your project depending upon preprocessor `#ifdefs` or `#ifs` or has such includes commented out with C-style comments. The undocumented `--override-depend` + `--custom=-llibrary -llibrary` workaround is available though if this bug is causing problems.
 
-Another known issue is that Supermake will not acknowledge source files (.cpp and .c) not in the current directory. Support for recursively adding source files in subdirectories is soon to come though, but will be limited in that there will be no way to choose which subdirectories to include or omit. This is a fundamental design choice though, in line with the inability to choose which individual source files to include.
-
 Lastly, it is worth noting that Supermake automatically includes libraries from /usr/local/lib, and then if `--run` is specified it sets LD_LIBRARY_PATH accordingly as well.
 
 ### Install
