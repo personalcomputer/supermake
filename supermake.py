@@ -282,154 +282,6 @@ class CodeFilesStore(set): #more expensive than it should be. Todo: Separation o
       if codeFile.GetFullPath() == path:
         return codeFile
     raise KeyError()
-  
-    
-class Makefile:
-  '''An abstract representation of a makefile suitable for conversion to a real makefile through Generate()'''  
-  
-  def __init__(self, sourceCodeFiles):
-    '''Initialize a representation of a makefile for the project at the current path (ideally, provided directory, but not in first revision), determining all the needed info about the project and its internals needed to proceed to generate the final output makefile.'''
-    self._sourceCodeFiles = sourceCodeFiles
-    self._debug = False
-    self._warn = False
-    self._optimize = False
-    self._libraryName = ''
-    self._binaryName = ''
-    self._objPrefix = ''
-    self._customCFlags = set([])
-    self._libraryDependencies = set([])
-    self._language = 'unknown'
-
-  def GuessBuildName(self):
-    '''Guess what the project is called based off of heuristics involving surrounding files and directory names.'''
-    #Guessing Strategy: Name the binary after the containing folder (if sourcecode is under 'src' path then it is likely it is part of a larger folder named as the projectname)
-    #Eg: if the source directory[where Supermake was ran from] is at say ~/projects/DeathStar/src/ then this will create the binary at ~/projects/DeathStar/DeathStar.run
-    if os.path.basename(os.getcwd()) == 'src' or os.path.basename(os.getcwd()) == 'source':
-      binaryName = os.path.basename(os.path.realpath('..')) + '.run'
-      if os.path.isdir('../bin'):
-        binaryName = '../bin/'+binaryName
-      elif os.path.isdir('./bin'):
-        binaryName = './bin/'+binaryName
-      else:
-        binaryName = '../'+binaryName
-      return binaryName
-
-    #Guessing Strategy: Look for the common GPL disclaimer and name it after the specified project name.
-    for codeFile in self._sourceCodeFiles:
-      m = re.search('\s*(.+) is free software(?:;)|(?::) you can redistribute it and/or modify', codeFile.GetContent())
-      if m:
-        if m.group(1) != 'This program' and m.group(1) != 'This software':
-          return m.group(1)
-        break; #breaks no-matter what, because if this file uses the generic one ('This program') then they all will
-
-    #Guessing Strategy: If there is only one source file, name it after that.
-    if len(self.SourceCodeInDirectory()) == 1:
-      return fileName(self.SourceCodeInDirectory()[0]) + '.run'
-    
-    #Guessing Strategy: Name it after the parent folder.
-    return os.path.basename(os.path.realpath('.'))+'.run'
-
-    #Guessing Strategy: Call it something totally generic.
-    return 'program.run'
-  
-  def Generate(self):  
-    makefile = ''
-    makefile += 'OBJS = '
-
-    makefile += ' '.join(os.path.join(sourceCodeFile.GetDirectory(), self._objPrefix+sourceCodeFile.GetName()+'.o') for sourceCodeFile in sorted(self._sourceCodeFiles, key=CodeFile.GetFullPath))
-    
-    makefile += '\n'
-
-    CFlags = ''
-    CFlags += ' -L/usr/local/include'
-
-    #Add the 'include' directory, if in use. 
-    if os.path.exists('include'):
-      CFlags += ' -Iinclude'
-    if os.path.exists('../include'):
-      CFlags += ' -I../include'
-
-    CFlags += ' ' + ' '.join(sorted(self._libraryDependencies))
-
-    if self._debug:
-      CFlags += ' -g -DDEBUG'# -pg' #-lprofiler #You'll have to use `--custom` guys
-
-    if self._warn:
-      CFlags += ' -Wall'
-
-    if self._optimize:
-      CFlags += ' -O3'
-
-    if self._customCFlags:
-      makefile += 'CUSTOMFLAGS = ' + self._customCFlags + '\n'
-      CFlags += ' $(CUSTOMFLAGS)'
-
-    makefile += 'FLAGS = ' + CFlags + '\n\n'
-
-    compiler = {'c++':'g++','c':'gcc'}[self._language] #python! :D?
-    
-    if self._libraryName:
-      makefile += 'all: '+self._libraryName+'.a '+self._libraryName+'.so\n\n'
-      #static library
-      makefile += self._libraryName+'.a: $(OBJS)\n'
-      makefile += '\tar rcs '+self._libraryName+'.a $(OBJS)\n\n'
-
-      #shared library
-      makefile += self._libraryName + '.so: $(OBJS)\n'
-      makefile += '\t'+compiler+' -shared -Wl,-soname,'+os.path.basename(self._libraryName)+'.so $(OBJS) -o '+self._libraryName+'.so\n\n'
-    else:
-      if not self._binaryName:
-        self._binaryName = self.GuessBuildName()
-        messenger.WarningMessage('Guessed a binary name '+self._binaryName+' (use --binary=NAME to specify this yourself)')
-      makefile += self._binaryName + ': $(OBJS)\n'
-      makefile += '\t'+compiler+' $(OBJS) $(FLAGS) -o '+self._binaryName+'\n\n'
-      
-    for sourceCodeFile in sorted(self._sourceCodeFiles, key=CodeFile.GetFullPath):
-      objectFileName = os.path.join(sourceCodeFile.GetDirectory(), self._objPrefix+sourceCodeFile.GetName()+'.o')
-      makefile += objectFileName+': '+sourceCodeFile.GetFullPath()+' '+' '.join([codeFile.GetFullPath() for codeFile in sorted(sourceCodeFile.GetCodeFileDependencies(), key=CodeFile.GetFullPath)])+'\n'
-      makefile += '\t'+compiler+' $(FLAGS) -c '+sourceCodeFile.GetFullPath()+' -o '+objectFileName+'\n\n'
-
-    if self._libraryName:
-      makefile += 'clean:\n\trm -f '+self._libraryName+'.a '+self._libraryName+'.so *.o'
-    else:
-      makefile += 'clean:\n\trm -f '+self._binaryName+' *.o'
-    
-    makefile += '\n'
-    
-    return makefile
-    
-  def SetDebug(self, debug):
-    self._debug = debug
-    
-  def SetWarn(self, warn):
-    self._warn = warn
-    
-  def SetOptimize(self, optimize):
-    self._optimize = optimize
-    
-  def SetLibraryName(self, libraryName):
-    self._libraryName = libraryName
-    
-  def SetBuildName(self, binaryName):
-    self._binaryName = binaryName
-    
-  def GetBuildName(self):
-    return self._binaryName
-    
-  def SetObjPrefix(self, objPrefix):
-    self._objPrefix = objPrefix
-    
-  def SetCustomCFlags(self, customCFlags):
-    self._customCFlags = customCFlags
-    
-  def SetLibraryDependencies(self, libraryDependencies):
-    self._libraryDependencies = libraryDependencies
-    
-  def SetLanguage(self, language):
-    self._language = language
-  
-  def __str__(self):
-    return self.Generate()
     
 class Options: #Attempted to overengineer this way too many times, still want to do it again because I don't really like this solution
   '''Commandline options given to Supermake'''
@@ -545,12 +397,9 @@ class Options: #Attempted to overengineer this way too many times, still want to
         continue
       
       raise OptionsError('Invalid argument: '+argument)
-        
     
 class Supermake:
   '''Supermake :)'''
-  
-  _options = Options()
 
   def __init__(self):
     try:
@@ -560,130 +409,235 @@ class Supermake:
         sys.exit(0)
       self._options = Options(arguments)
       
-      if not [filePath for filePath in os.listdir('.') if fileExtension(filePath) in all_source_extensions]:
-        raise SupermakeError('No sourcecode found. For help see --help.')
-
-      # Crawl, picking up all code files to generate a representation of all the code files and their dependencies.
-      sourceCodeFiles = [] #actual source files, .cpp, .c, etc. Supermake makes a distinction between 'header' files and 'source' files.
-      codeFilesStore = CodeFilesStore() #Should only be headers
-
-      sourceHierarchy = []
-      if self._options.recurse:
-        sourceHierarchy = [(directory, filenames) for (directory, unused, filenames) in os.walk('.')]
-      else:
-        sourceHierarchy = [('.', os.listdir('.'))]
-
-      for directory, filenames in sourceHierarchy:
-        for filepath in [os.path.join(directory, filename) for filename in filenames if fileExtension(filename) in all_source_extensions]:
-          try:
-            sourceCodeFiles.append(CodeFile(filepath, codeFilesStore))
-          except NotCodeError:
-            pass
-      
-      libraryDependencies = set([])
-      for codeFile in sourceCodeFiles:
-        libraryDependencies |= codeFile.GetLibraryDependencies()
-
-      language = 'c'
-      if 'c++' in [sourceCodeFile.GetLanguage() for sourceCodeFile in codeFilesStore] or 'c++' in [sourceCodeFile.GetLanguage() for sourceCodeFile in sourceCodeFiles]:
-        language = 'c++'
-      
-      # Init and Generate Makefile
-      makefile = Makefile(sourceCodeFiles)
-      
-      makefile.SetDebug(self._options.debug)
-      makefile.SetWarn(self._options.warn)
-      makefile.SetOptimize(self._options.optimize)
-      makefile.SetBuildName(self._options.binaryName)
-      makefile.SetLibraryName(self._options.libraryName)
-      makefile.SetObjPrefix(self._options.objPrefix)
-      makefile.SetLanguage(language)
-      if not self._options.overrideLibraryDependencies:
-        makefile.SetLibraryDependencies(libraryDependencies)
-      else:
-        makefile.SetLibraryDependencies(set([]))
-      makefile.SetCustomCFlags(self._options.customCFlags)
-      
       if self._options.quiet:
         global messenger
         messenger.SetQuiet()
+        
+      # Crawl
+      self._Crawl()
       
-      makefileContent = makefile.Generate()
+      # Name binary
+      self._buildName = self._options.binaryName
+      if not self._buildName:
+        self._buildName = self._GuessBuildName()
+        messenger.WarningMessage('Guessed a binary name '+self._buildName+' (use --binary=NAME to specify this yourself)')
       
+      # Create the Makefile :D
+      self._makefile = self._GenerateMakefile()
+      
+      # Print the makefile
       if self._options.printMakefile:
-        print(makefileContent)
+        print(self._makefile)
         return
         
-
-      # Determine if  `make clean` is needed
-      needsAutoClean = False
-      if os.path.exists('makefile') or os.path.exists('Makefile'):
-        oldMakefileFilename = ''
-        if os.path.exists('makefile'):
-          oldMakefileFilename = 'makefile'
-        elif os.path.exists('Makefile'):
-          oldMakefileFilename = 'Makefile'
-
+      # Find old makefile to determine if autoclean is needed and to make a backup
+      self._oldMakefileName = ''
+      if os.path.exists('makefile'):
+        self._oldMakefileName = 'makefile'
+      elif os.path.exists('Makefile'):
+        self._oldMakefileName = 'Makefile'
+      
+      autoCleanNeeded = False
+      if self._oldMakefileName:
         if self._options.autoClean:
-          oldMakefileContent = open(oldMakefileFilename, 'r').read()
-          if oldMakefileContent == makefileContent:
-            needsAutoClean = False
-          else:
-            #Simply look to see if $FLAGS differs. Simple, faulty, oh well.
-            m1 = re.search('^FLAGS = .+$', oldMakefileContent, re.MULTILINE)
-            if not m1:
-              needsAutoClean = True
-            else:
-              m2 = re.search('^FLAGS = .+$', makefileContent, re.MULTILINE)
-              if m2.group() == m1.group():
-                needsAutoClean = False
-              else:
-                needsAutoClean = True
-
-        shutil.copy(oldMakefileFilename, '/tmp/'+oldMakefileFilename+'.old')
-        messenger.WarningMessage('Overwriting previous makefile (previous makefile copied to /tmp/'+oldMakefileFilename+'.old in case you weren\'t ready for this!)')
-
+          autoCleanNeeded = self._IsAutocleanNeeded()
+        
+        shutil.copy(self._oldMakefileName, '/tmp/'+self._oldMakefileName+'.old')
+        messenger.WarningMessage('Overwriting previous makefile (previous makefile copied to /tmp/'+self._oldMakefileName+'.old in case you weren\'t ready for this!)')
+        
+      # Write out new makefile
       makefileFile = open('makefile', 'w')
       if not self._options.discrete:
         makefileFile.write(makefileHeader+'\n')
-      makefileFile.write(makefileContent)
+      makefileFile.write(self._makefile)
       makefileFile.close()
-
-      if needsAutoClean:
+    
+      # Autoclean
+      if autoCleanNeeded:
         messenger.Message('Makefiles critically differ. Executing command: make clean')
         subprocess.call(['make', 'clean'])
 
       # Compile
       if self._options.make:
-        if subprocess.call('make') != 0:
-          if self._options.run:
-            messenger.Message('Compilation failed, ignoring --run.')
-            return
-        
-        # Run
-        if self._options.run:
-          (binaryParentFolder, binaryFilename) = os.path.split(makefile.GetBuildName())
-          
-          if self._options.debug:
-            cmdargs = ['gdb']
-            if self._options.binaryArgs:
-              cmdargs.append('--args')
-            cmdargs.append('./'+binaryFilename)
-            if self._options.binaryArgs:
-              cmdargs.extend(self._options.binaryArgs)
-          else:
-            cmdargs = ['./'+binaryFilename]
-            cmdargs.extend(self._options.binaryArgs)
-          
-          if binaryParentFolder:
-            #subprocess.Popen(cmdargs, cwd=binaryParentFolder) #This doesn't properly pipe the terminal stdin to gdb and I don't know how to resolve that, so using os.system for now.
-            os.system('cd '+binaryParentFolder+' &&'+' '.join(cmdargs))
-          else:
-            #subprocess.Popen(cmdargs)
-            os.system(' '.join(cmdargs))
+        self._Compile()
+      
+      # Run
+      if self._options.run:
+        self._Run()
             
     except SupermakeError as e:
-      messenger.ErrorMessage(e.What()) 
- 
+      messenger.ErrorMessage(e.What())
+  
+  def _Crawl(self):
+    '''Crawl, picking up all code files to generate a representation of all the code files and their dependencies.'''
+    self._sourceCodeFiles = [] #actual source files, .cpp, .c, etc. Supermake makes a distinction between 'header' files and 'source' files.
+    self._libraryDependencies = set([])
+    codeFilesStore = CodeFilesStore() #Should only be headers
+
+    sourceHierarchy = []
+    if self._options.recurse:
+      sourceHierarchy = [(directory, filenames) for (directory, unused, filenames) in os.walk('.')]
+    else:
+      sourceHierarchy = [('.', os.listdir('.'))]
+
+    for directory, filenames in sourceHierarchy:
+      for filepath in [os.path.join(directory, filename) for filename in filenames if fileExtension(filename) in all_source_extensions]:
+        try:
+          self._sourceCodeFiles.append(CodeFile(filepath, codeFilesStore))
+        except NotCodeError:
+          pass
+          
+    if not self._sourceCodeFiles:
+      raise SupermakeError('No sourcecode found. For help see --help.')
+    
+    libraryDependencies = set([])
+    for codeFile in self._sourceCodeFiles:
+      self._libraryDependencies |= codeFile.GetLibraryDependencies()
+
+    self._language = 'c'
+    if 'c++' in [sourceCodeFile.GetLanguage() for sourceCodeFile in codeFilesStore] or 'c++' in [sourceCodeFile.GetLanguage() for sourceCodeFile in self._sourceCodeFiles]:
+      self._language = 'c++'
+    
+    if self._options.overrideLibraryDependencies:
+      self._libraryDependencies = set([])
+    
+  def _GuessBuildName(self):
+    '''Guess what the project is called based off of heuristics involving surrounding files and directory names.'''
+    #Guessing Strategy: Name the binary after the containing folder (if sourcecode is under 'src' path then it is likely it is part of a larger folder named as the projectname)
+    #Eg: if the source directory[where Supermake was ran from] is at say ~/projects/DeathStar/src/ then this will create the binary at ~/projects/DeathStar/DeathStar.run
+    if os.path.basename(os.getcwd()) == 'src' or os.path.basename(os.getcwd()) == 'source':
+      binaryName = os.path.basename(os.path.realpath('..')) + '.run'
+      if os.path.isdir('../bin'):
+        binaryName = '../bin/'+binaryName
+      elif os.path.isdir('./bin'):
+        binaryName = './bin/'+binaryName
+      else:
+        binaryName = '../'+binaryName
+      return binaryName
+
+    #Guessing Strategy: Look for the common GPL disclaimer and name it after the specified project name.
+    for codeFile in self._sourceCodeFiles:
+      m = re.search('\s*(.+) is free software(?:;)|(?::) you can redistribute it and/or modify', codeFile.GetContent())
+      if m:
+        if m.group(1) != 'This program' and m.group(1) != 'This software':
+          return m.group(1)
+        break; #breaks no-matter what, because if this file uses the generic one ('This program') then they all will
+
+    #Guessing Strategy: If there is only one source file, name it after that.
+    if len(self._sourceCodeFiles) == 1:
+      return fileName(self._sourceCodeFiles[0]) + '.run'
+    
+    #Guessing Strategy: Name it after the parent folder.
+    return os.path.basename(os.path.realpath('.'))+'.run'
+
+    #Guessing Strategy: Call it something totally generic.
+    return 'program.run'
+    
+  def _GenerateMakefile(self):
+    '''From some abstract options, generate the actual text of a gnu makefile.'''#Not sure removing this from its own unique class was a good idea. Flow of information now isn't explicit... :|
+    makefile = ''
+    makefile += 'OBJS = '
+
+    makefile += ' '.join(os.path.join(sourceCodeFile.GetDirectory(), self._options.objPrefix+sourceCodeFile.GetName()+'.o') for sourceCodeFile in sorted(self._sourceCodeFiles, key=CodeFile.GetFullPath))
+    
+    makefile += '\n'
+
+    CFlags = ''
+    CFlags += ' -L/usr/local/include'
+
+    #Add the 'include' directory, if in use. 
+    if os.path.exists('include'):
+      CFlags += ' -Iinclude'
+    if os.path.exists('../include'):
+      CFlags += ' -I../include'
+
+    CFlags += ' ' + ' '.join(sorted(self._libraryDependencies))
+
+    if self._options.debug:
+      CFlags += ' -g -DDEBUG'# -pg' #-lprofiler #You'll have to use `--custom` guys
+
+    if self._options.warn:
+      CFlags += ' -Wall'
+
+    if self._options.optimize:
+      CFlags += ' -O3'
+
+    if self._options.customCFlags:
+      makefile += 'CUSTOMFLAGS = ' + self._options.customCFlags + '\n'
+      CFlags += ' $(CUSTOMFLAGS)'
+
+    makefile += 'FLAGS = ' + CFlags + '\n\n'
+
+    compiler = {'c++':'g++','c':'gcc'}[self._language] #python! :D?
+    
+    if self._options.libraryName:
+      makefile += 'all: '+self._options.libraryName+'.a '+self._options.libraryName+'.so\n\n'
+      #static library
+      makefile += self._options.libraryName+'.a: $(OBJS)\n'
+      makefile += '\tar rcs '+self._options.libraryName+'.a $(OBJS)\n\n'
+
+      #shared library
+      makefile += self._options.libraryName + '.so: $(OBJS)\n'
+      makefile += '\t'+compiler+' -shared -Wl,-soname,'+os.path.basename(self._options.libraryName)+'.so $(OBJS) -o '+self._options.libraryName+'.so\n\n'
+    else:
+      makefile += self._buildName + ': $(OBJS)\n'
+      makefile += '\t'+compiler+' $(OBJS) $(FLAGS) -o '+self._buildName+'\n\n'
+      
+    for sourceCodeFile in sorted(self._sourceCodeFiles, key=CodeFile.GetFullPath):
+      objectFileName = os.path.join(sourceCodeFile.GetDirectory(), self._options.objPrefix+sourceCodeFile.GetName()+'.o')
+      makefile += objectFileName+': '+sourceCodeFile.GetFullPath()+' '+' '.join([codeFile.GetFullPath() for codeFile in sorted(sourceCodeFile.GetCodeFileDependencies(), key=CodeFile.GetFullPath)])+'\n'
+      makefile += '\t'+compiler+' $(FLAGS) -c '+sourceCodeFile.GetFullPath()+' -o '+objectFileName+'\n\n'
+
+    if self._options.libraryName:
+      makefile += 'clean:\n\trm -f '+self._options.libraryName+'.a '+self._options.libraryName+'.so *.o'
+    else:
+      makefile += 'clean:\n\trm -f '+self._buildName+' *.o'
+    
+    makefile += '\n'
+    
+    return makefile
+    
+  def _IsAutocleanNeeded(self):
+    '''Determine if `make clean` is needed (if the previously compiled object files were not compiled the same as they are set to be compiled now).'''
+    oldMakefile = open(self._oldMakefileName, 'r').read()
+    if oldMakefile == self._makefile:
+      needsAutoClean = False
+    else:
+      #Simply look to see if $FLAGS differs. Simple, faulty, oh well.
+      m1 = re.search('^FLAGS = .+$', oldMakefile, re.MULTILINE)
+      if not m1:
+        return True
+      else:
+        m2 = re.search('^FLAGS = .+$', self._makefile, re.MULTILINE)
+        if m2.group() == m1.group():
+          return False
+        else:
+          return True
+    
+  def _Compile(self):
+    if subprocess.call('make') != 0:
+      raise SupermakeError('Compilation failed. Ignoring --run.')
+  
+  def _Run(self):
+    (binaryParentFolder, binaryFilename) = os.path.split(self._buildName)
+    
+    if self._options.debug:
+      cmdargs = ['gdb']
+      if self._options.binaryArgs:
+        cmdargs.append('--args')
+      cmdargs.append('./'+binaryFilename)
+      if self._options.binaryArgs:
+        cmdargs.extend(self._options.binaryArgs)
+    else:
+      cmdargs = ['./'+binaryFilename]
+      cmdargs.extend(self._options.binaryArgs)
+    
+    if binaryParentFolder:
+      #subprocess.Popen(cmdargs, cwd=binaryParentFolder) #This doesn't properly pipe the terminal stdin to gdb and I don't know how to resolve that, so using os.system for now.
+      os.system('cd '+binaryParentFolder+' &&'+' '.join(cmdargs))
+    else:
+      #subprocess.Popen(cmdargs)
+      os.system(' '.join(cmdargs))
+
 if __name__ == '__main__':
   Supermake()
