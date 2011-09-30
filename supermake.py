@@ -617,11 +617,12 @@ class Supermake:
             m1 = re.search('^FLAGS = .+$', oldMakefileContent, re.MULTILINE)
             if not m1:
               needsAutoClean = True
-            m2 = re.search('^FLAGS = .+$', makefileContent, re.MULTILINE)
-            if m2.group() == m1.group():
-              needsAutoClean = False
             else:
-              needsAutoClean = True
+              m2 = re.search('^FLAGS = .+$', makefileContent, re.MULTILINE)
+              if m2.group() == m1.group():
+                needsAutoClean = False
+              else:
+                needsAutoClean = True
 
         shutil.copy(oldMakefileFilename, '/tmp/'+oldMakefileFilename+'.old')
         messenger.WarningMessage('Overwriting previous makefile (previous makefile copied to /tmp/'+oldMakefileFilename+'.old in case you weren\'t ready for this!)')
