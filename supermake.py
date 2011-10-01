@@ -217,6 +217,7 @@ class CodeFile:
       if headerDeps: #Whole thing here is silly. Why doesn't python respect the assignment operator as a real operator with a return value?
         self._libraryDependencies.update(headerDeps)
       else: #Check for local inclusion
+        header = os.path.relpath(os.path.join(self._directory, header))
         if os.path.exists(header):
           header = header
         elif os.path.exists(os.path.join('include', header)): #hacky
