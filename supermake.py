@@ -524,8 +524,8 @@ class Supermake:
           return m.group(1)
         break; #breaks no-matter what, because if this file uses the generic one ('This program') then they all will
 
-    #Guessing Strategy: If there is only one source file, name it after that.
-    if len(self._sourceCodeFiles) == 1:
+    #Guessing Strategy: If there is only one source file, name it after that. (unless it is main.cpp)
+    if len(self._sourceCodeFiles) == 1 and filename(self._sourceCodeFiles[0]) != 'main':
       return fileName(self._sourceCodeFiles[0]) + '.run'
     
     #Guessing Strategy: Name it after the parent folder.
