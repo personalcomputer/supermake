@@ -295,8 +295,8 @@ class Options: #Attempted to overengineer this way too many times, still want to
     self.overrideLibraryDependencies = False
     self.libraryName = ''
     self.binaryName = ''
-    self.objPrefix = ''
-    self.customCFlags = []
+    self.prefix = ''
+    self.customCFlags = ''
     self.printMakefile = False
     self.make = False
     self.run = False
@@ -365,12 +365,12 @@ class Options: #Attempted to overengineer this way too many times, still want to
         self.binaryName = argument[argument.find('=')+1:]
         continue
         
-      if argument.startswith('--oprefix='): #Undocumented
-        self.objPrefix = argument[argument.find('=')+1:]
+      if argument.startswith('--prefix='): #Undocumented
+        self.prefix = argument[argument.find('=')+1:]
         continue
         
       if argument.startswith('--custom='):
-        self.customCFlags = argument[argument.find('=')+1:].split()
+        self.customCFlags = argument[argument.find('=')+1:]
         continue
         
       if argument == '--print':
@@ -383,10 +383,6 @@ class Options: #Attempted to overengineer this way too many times, still want to
 
       if argument == '--run':
         self.run = True
-        continue
-        
-      if argument == '--no-autoclean': #Undocumented
-        self.autoClean = False
         continue
         
       if argument == '--quiet':
@@ -421,6 +417,7 @@ class Supermake:
       self._buildName = self._options.binaryName
       if not self._buildName:
         self._buildName = self._GuessBuildName()
+        self._buildName = os.path.join(os.path.dirname(self._buildName), self._options.prefix+os.path.basename(self._buildName))
         messenger.WarningMessage('Guessed a binary name '+self._buildName+' (use --binary=NAME to specify this yourself)')
       
       # Create the Makefile :D
@@ -433,21 +430,20 @@ class Supermake:
         
       # Find old makefile to determine if autoclean is needed and to make a backup
       self._oldMakefileName = ''
-      if os.path.exists('makefile'):
-        self._oldMakefileName = 'makefile'
-      elif os.path.exists('Makefile'):
-        self._oldMakefileName = 'Makefile'
+      if os.path.exists(self._options.prefix+'makefile'):
+        self._oldMakefileName = self._options.prefix+'makefile'
+      elif os.path.exists(self._options.prefix+'Makefile'):
+        self._oldMakefileName = self._options.prefix+'Makefile'
       
       autoCleanNeeded = False
       if self._oldMakefileName:
-        if self._options.autoClean:
-          autoCleanNeeded = self._IsAutocleanNeeded()
+        autoCleanNeeded = self._IsAutocleanNeeded()
         
         shutil.copy(self._oldMakefileName, '/tmp/'+self._oldMakefileName+'.old')
         messenger.WarningMessage('Overwriting previous makefile (previous makefile copied to /tmp/'+self._oldMakefileName+'.old in case you weren\'t ready for this!)')
         
       # Write out new makefile
-      makefileFile = open('makefile', 'w')
+      makefileFile = open(self._options.prefix+'makefile', 'w')
       if not self._options.discrete:
         makefileFile.write(makefileHeader+'\n')
       makefileFile.write(self._makefile)
@@ -456,7 +452,10 @@ class Supermake:
       # Autoclean
       if autoCleanNeeded:
         messenger.Message('Makefiles critically differ. Executing command: make clean')
-        subprocess.call(['make', 'clean'])
+        if self._options.prefix:
+          os.system('make -f '+self._options.prefix+'makefile clean')
+        else:
+          os.system('make clean')
 
       # Compile
       if self._options.make:
@@ -539,7 +538,7 @@ class Supermake:
     makefile = ''
     makefile += 'OBJS = '
 
-    makefile += ' '.join(os.path.join(sourceCodeFile.GetDirectory(), self._options.objPrefix+sourceCodeFile.GetName()+'.o') for sourceCodeFile in sorted(self._sourceCodeFiles, key=CodeFile.GetFullPath))
+    makefile += ' '.join(os.path.join(sourceCodeFile.GetDirectory(), self._options.prefix+sourceCodeFile.GetName()+'.o') for sourceCodeFile in sorted(self._sourceCodeFiles, key=CodeFile.GetFullPath))
     
     makefile += '\n'
 
@@ -567,7 +566,7 @@ class Supermake:
       makefile += 'CUSTOMFLAGS = ' + self._options.customCFlags + '\n'
       CFlags += ' $(CUSTOMFLAGS)'
 
-    makefile += 'FLAGS = ' + CFlags + '\n\n'
+    makefile += 'FLAGS =' + CFlags + '\n\n'
 
     compiler = {'c++':'g++','c':'gcc'}[self._language] #python! :D?
     
@@ -585,14 +584,14 @@ class Supermake:
       makefile += '\t'+compiler+' $(OBJS) $(FLAGS) -o '+self._buildName+'\n\n'
       
     for sourceCodeFile in sorted(self._sourceCodeFiles, key=CodeFile.GetFullPath):
-      objectFileName = os.path.join(sourceCodeFile.GetDirectory(), self._options.objPrefix+sourceCodeFile.GetName()+'.o')
+      objectFileName = os.path.join(sourceCodeFile.GetDirectory(), self._options.prefix+sourceCodeFile.GetName()+'.o')
       makefile += objectFileName+': '+sourceCodeFile.GetFullPath()+' '+' '.join([codeFile.GetFullPath() for codeFile in sorted(sourceCodeFile.GetCodeFileDependencies(), key=CodeFile.GetFullPath)])+'\n'
       makefile += '\t'+compiler+' $(FLAGS) -c '+sourceCodeFile.GetFullPath()+' -o '+objectFileName+'\n\n'
 
     if self._options.libraryName:
       makefile += 'clean:\n\trm -f '+self._options.libraryName+'.a '+self._options.libraryName+'.so *.o'
     else:
-      makefile += 'clean:\n\trm -f '+self._buildName+' *.o'
+      makefile += 'clean:\n\trm -f '+self._buildName+' $(OBJS)'
     
     makefile += '\n'
     
@@ -616,7 +615,10 @@ class Supermake:
           return True
     
   def _Compile(self):
-    if subprocess.call('make') != 0:
+    cmd = ['make']
+    if self._options.prefix:
+      cmd.extend(['-f',self._options.prefix+'makefile'])
+    if subprocess.call(cmd) != 0:
       raise SupermakeError('Compilation failed. Ignoring --run.')
   
   def _Run(self):
