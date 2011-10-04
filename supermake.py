@@ -197,6 +197,8 @@ class CodeFile:
     self._directory, basename = os.path.split(os.path.normpath(os.path.relpath(filepath)))
     self._name = fileName(basename)
     self._extension = fileExtension(basename)
+
+    self._fullPath = os.path.join(self._directory, self._name+'.'+self._extension
     
     if self._extension not in all_code_extensions and os.path.isfile(self.GetFullPath()):
       raise NotCodeError()
@@ -258,7 +260,7 @@ class CodeFile:
     return self._codeFileDependencies
   
   def GetFullPath(self):
-    return os.path.join(self._directory, self._name+'.'+self._extension)
+    return self._fullPath
     
   def GetName(self):
     return self._name
@@ -536,6 +538,7 @@ class Supermake:
     
   def _GenerateMakefile(self):
     '''From some abstract options, generate the actual text of a gnu makefile.'''#Not sure removing this from its own unique class was a good idea. Flow of information now isn't explicit... :|
+
     makefile = ''
     makefile += 'OBJS = '
 
