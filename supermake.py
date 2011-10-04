@@ -461,11 +461,14 @@ class Supermake:
           os.system('make clean')
 
       # Compile
+      compilationSuccesful = False
       if self._options.make:
-        self._Compile()
+         compilationSuccesful = self._Compile()
       
       # Run
       if self._options.run:
+        if not compilationSuccesful:
+          raise SupermakeError('Compilation failed. Ignoring --run.')
         self._Run()
             
     except SupermakeError as e:
@@ -617,14 +620,13 @@ class Supermake:
           return False
         else:
           return True
-    
+  
   def _Compile(self):
     cmd = ['make']
     if self._options.prefix:
       cmd.extend(['-f',self._options.prefix+'makefile'])
-    if subprocess.call(cmd) != 0:
-      raise SupermakeError('Compilation failed. Ignoring --run.')
-  
+    return (subprocess.call(cmd) == 0)
+   
   def _Run(self):
     (binaryParentFolder, binaryFilename) = os.path.split(self._buildName)
     
