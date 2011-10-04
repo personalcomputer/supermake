@@ -26,14 +26,14 @@ Try it out with `supermake --print`, which will automatically generate a makefil
 ### Notes/Troubleshooting
 Supermake is written for python 3, but should (and seems to, from tests) work in python 2 as well.
 
-If Supermake fails to recognize some libraries you are using (there unfortunately won't be an error message on this until the compilation stage), you can manually add them to the 'libraries' datastructure (definition near top of supermake.py). Supermake can't support every single library out there, but I try to support the ones I use most myself, at least. Send me your Github pull request with the additional library support and I'll gladly accept it.
+If Supermake fails to recognize some libraries you are using (there unfortunately won't be an error message on this until the compilation stage), you can manually add them to the `libraries` datastructure (definition near top of supermake.py). Supermake can't support every single library out there, but I try to support the ones I use most myself, at least. Send me your Github pull request with the additional library support and I'll gladly accept it.
 
-A known bug with Supermake is that it cannot preprocess potentially disabled blocks of code from `#ifdefs` or `#ifs` and cannot understand c-style comments ('/\*' and '\*/'). This may lead to unwanted library inclusions if you use different libraries in your project depending upon preprocessor `#ifdefs` or `#ifs` or has such includes commented out with C-style comments. The undocumented `--override-depend` + `--custom=-llibrary -llibrary` workaround is available though if this bug is causing problems.
+A known bug with Supermake is that it cannot preprocess potentially disabled blocks of code from `#ifdefs` or `#ifs` and cannot understand c-style comments (`/\*` and `\*/`). This may lead to unwanted library inclusions if you use different libraries in your project depending upon preprocessor `#ifdefs` or `#ifs` or has such includes commented out with C-style comments. The undocumented `--override-depend` + `--custom=-llibrary -llibrary` workaround is available though if this bug is causing problems.
 
 Lastly, it is worth noting that Supermake automatically includes libraries from /usr/local/lib, and then if `--run` is specified it sets LD_LIBRARY_PATH accordingly as well.
 
 ### Install
-To use Supermake effectively, you will need to need to create a symbolic link somewhere in your $PATH that points to supermake.py. This allows you to execute the command 'supermake' from any working directory.
+To use Supermake effectively, you will need to need to create a symbolic link somewhere in your $PATH that points to supermake.py. This allows you to execute the command `supermake` from any working directory.
 
 Ex: (install to /usr/local/bin, using sudo) `sudo mkdir -p /usr/local/bin && sudo ln -s supermake.py /usr/local/bin/supermake`
 
