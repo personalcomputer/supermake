@@ -198,7 +198,7 @@ class CodeFile:
     self._name = fileName(basename)
     self._extension = fileExtension(basename)
 
-    self._fullPath = os.path.join(self._directory, self._name+'.'+self._extension
+    self._fullPath = os.path.join(self._directory, self._name+'.'+self._extension)
     
     if self._extension not in all_code_extensions and os.path.isfile(self.GetFullPath()):
       raise NotCodeError()
@@ -542,7 +542,7 @@ class Supermake:
     makefile = ''
     makefile += 'OBJS = '
 
-    makefile += ' '.join(os.path.join(sourceCodeFile.GetDirectory(), self._options.prefix+sourceCodeFile.GetName()+'.o') for sourceCodeFile in sorted(self._sourceCodeFiles, key=CodeFile.GetFullPath))
+    makefile += ' '.join((os.path.join(sourceCodeFile.GetDirectory(), self._options.prefix+sourceCodeFile.GetName()+'.o').replace(' ', r'\ ')) for sourceCodeFile in sorted(self._sourceCodeFiles, key=CodeFile.GetFullPath))
     
     makefile += '\n'
 
@@ -588,9 +588,9 @@ class Supermake:
       makefile += '\t'+compiler+' $(OBJS) $(FLAGS) -o '+self._buildName+'\n\n'
       
     for sourceCodeFile in sorted(self._sourceCodeFiles, key=CodeFile.GetFullPath):
-      objectFileName = os.path.join(sourceCodeFile.GetDirectory(), self._options.prefix+sourceCodeFile.GetName()+'.o')
-      makefile += objectFileName+': '+sourceCodeFile.GetFullPath()+' '+' '.join([codeFile.GetFullPath() for codeFile in sorted(sourceCodeFile.GetCodeFileDependencies(), key=CodeFile.GetFullPath)])+'\n'
-      makefile += '\t'+compiler+' $(FLAGS) -c '+sourceCodeFile.GetFullPath()+' -o '+objectFileName+'\n\n'
+      objectFileName = (os.path.join(sourceCodeFile.GetDirectory(), self._options.prefix+sourceCodeFile.GetName()+'.o')).replace(' ', r'\ ')
+      makefile += objectFileName+': '+sourceCodeFile.GetFullPath().replace(' ', r'\ ')+' '+' '.join([codeFile.GetFullPath().replace(' ', r'\ ') for codeFile in sorted(sourceCodeFile.GetCodeFileDependencies(), key=CodeFile.GetFullPath)])+'\n'
+      makefile += '\t'+compiler+' $(FLAGS) -c '+sourceCodeFile.GetFullPath().replace(' ', r'\ ')+' -o '+objectFileName+'\n\n'
 
     if self._options.libraryName:
       makefile += 'clean:\n\trm -f '+self._options.libraryName+'.a '+self._options.libraryName+'.so *.o'
