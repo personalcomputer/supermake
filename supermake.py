@@ -165,6 +165,14 @@ class NotCodeError(SupermakeError):
 class OptionsError(SupermakeError):
   pass
   
+quote_pos = re.compile('(?=[^-0-9a-zA-Z_./\n])')
+def shellEscape(string): #Slightly modified version of Stack Overflow user Dave Abrahams's solution. <http://stackoverflow.com/questions/967443/python-module-to-shellquote-unshellquote>
+  if string:
+    return quote_pos.sub('\\\\', string).replace('\n',"'\n'")
+  else:
+    return "''"
+  #Q: Why not just use quotes? A: make does not like quotes.
+            
 def fileExtension(basename): #Similar to os.path.basename
   try:
     return basename[basename.rindex('.')+1:]
@@ -544,7 +552,7 @@ class Supermake:
     makefile = ''
     makefile += 'OBJS = '
 
-    makefile += ' '.join((os.path.join(sourceCodeFile.GetDirectory(), self._options.prefix+sourceCodeFile.GetName()+'.o').replace(' ', r'\ ')) for sourceCodeFile in sorted(self._sourceCodeFiles, key=CodeFile.GetFullPath))
+    makefile += ' '.join(shellEscape(os.path.join(sourceCodeFile.GetDirectory(), self._options.prefix+sourceCodeFile.GetName()+'.o')) for sourceCodeFile in sorted(self._sourceCodeFiles, key=CodeFile.GetFullPath))
     
     makefile += '\n'
 
@@ -577,27 +585,27 @@ class Supermake:
     compiler = {'c++':'g++','c':'gcc'}[self._language] #python! :D?
     
     if self._options.libraryName:
-      makefile += 'all: '+self._options.libraryName+'.a '+self._options.libraryName+'.so\n\n'
+      makefile += 'all: '+shellEscape(self._options.libraryName)+'.a '+shellEscape(self._options.libraryName)+'.so\n\n'
       #static library
-      makefile += self._options.libraryName+'.a: $(OBJS)\n'
-      makefile += '\tar rcs '+self._options.libraryName+'.a $(OBJS)\n\n'
+      makefile += shellEscape(self._options.libraryName)+'.a: $(OBJS)\n'
+      makefile += '\tar rcs '+shellEscape(self._options.libraryName)+'.a $(OBJS)\n\n'
 
       #shared library
-      makefile += self._options.libraryName + '.so: $(OBJS)\n'
-      makefile += '\t'+compiler+' -shared -Wl,-soname,'+os.path.basename(self._options.libraryName)+'.so $(OBJS) -o '+self._options.libraryName+'.so\n\n'
+      makefile += shellEscape(self._options.libraryName) + '.so: $(OBJS)\n'
+      makefile += '\t'+compiler+' -shared -Wl,-soname,'+shellEscape(os.path.basename(self._options.libraryName))+'.so $(OBJS) -o '+shellEscape(self._options.libraryName)+'.so\n\n'
     else:
-      makefile += self._buildName + ': $(OBJS)\n'
-      makefile += '\t'+compiler+' $(OBJS) $(FLAGS) -o '+self._buildName+'\n\n'
+      makefile += shellEscape(self._buildName) + ': $(OBJS)\n'
+      makefile += '\t'+compiler+' $(OBJS) $(FLAGS) -o '+shellEscape(self._buildName)+'\n\n'
       
     for sourceCodeFile in sorted(self._sourceCodeFiles, key=CodeFile.GetFullPath):
-      objectFileName = (os.path.join(sourceCodeFile.GetDirectory(), self._options.prefix+sourceCodeFile.GetName()+'.o')).replace(' ', r'\ ')
-      makefile += objectFileName+': '+sourceCodeFile.GetFullPath().replace(' ', r'\ ')+' '+' '.join([codeFile.GetFullPath().replace(' ', r'\ ') for codeFile in sorted(sourceCodeFile.GetCodeFileDependencies(), key=CodeFile.GetFullPath)])+'\n'
-      makefile += '\t'+compiler+' $(FLAGS) -c '+sourceCodeFile.GetFullPath().replace(' ', r'\ ')+' -o '+objectFileName+'\n\n'
+      objectFileName = shellEscape(os.path.join(sourceCodeFile.GetDirectory(), self._options.prefix+sourceCodeFile.GetName()+'.o'))
+      makefile += objectFileName+': '+shellEscape(sourceCodeFile.GetFullPath())+' '+' '.join([shellEscape(codeFile.GetFullPath()) for codeFile in sorted(sourceCodeFile.GetCodeFileDependencies(), key=CodeFile.GetFullPath)])+'\n'
+      makefile += '\t'+compiler+' $(FLAGS) -c '+shellEscape(sourceCodeFile.GetFullPath())+' -o '+objectFileName+'\n\n'
 
     if self._options.libraryName:
-      makefile += 'clean:\n\trm -f '+self._options.libraryName+'.a '+self._options.libraryName+'.so *.o'
+      makefile += 'clean:\n\trm -f '+shellEscape(self._options.libraryName)+'.a '+shellEscape(self._options.libraryName)+'.so *.o'
     else:
-      makefile += 'clean:\n\trm -f '+self._buildName+' $(OBJS)'
+      makefile += 'clean:\n\trm -f '+shellEscape(self._buildName)+' $(OBJS)'
     
     makefile += '\n'
     
@@ -623,7 +631,7 @@ class Supermake:
   def _Compile(self):
     cmd = ['make']
     if self._options.prefix:
-      cmd.extend(['-f',self._options.prefix+'makefile'])
+      cmd.extend(['-f',shellEscape(self._options.prefix+'makefile')])
     return (subprocess.call(cmd) == 0)
    
   def _Run(self):
@@ -633,16 +641,16 @@ class Supermake:
       cmdargs = ['gdb']
       if self._options.binaryArgs:
         cmdargs.append('--args')
-      cmdargs.append('./'+binaryFilename)
+      cmdargs.append('./'+shellEscape(binaryFilename))
       if self._options.binaryArgs:
         cmdargs.extend(self._options.binaryArgs)
     else:
-      cmdargs = ['./'+binaryFilename]
+      cmdargs = [shellEscape('./'+binaryFilename)]
       cmdargs.extend(self._options.binaryArgs)
     
     if binaryParentFolder:
       #subprocess.Popen(cmdargs, cwd=binaryParentFolder) #This doesn't properly pipe the terminal stdin to gdb and I don't know how to resolve that, so using os.system for now.
-      os.system('cd '+binaryParentFolder+' &&'+' '.join(cmdargs))
+      os.system('cd '+shellEscape(binaryParentFolder)+' &&'+' '.join(cmdargs))
     else:
       #subprocess.Popen(cmdargs)
       os.system(' '.join(cmdargs))
