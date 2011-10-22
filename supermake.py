@@ -78,7 +78,7 @@ libraries = { #There are a lot of problems with the current approach, but this i
   'ncurses.h': ['-lncurses'],
   'google/profiler.h': ['-lprofiler'],
   
-  'SDL/': ['`sdl-config --cflags--libs`'],
+  'SDL/': ['`sdl-config --cflags --libs`'],
   'SDL/SDL_image.h': ['-lSDL_image'],
   'SDL/SDL_mixer.h': ['-lSDL_mixer'],
   'SDL/SDL_opengl.h': ['-lGL'],
