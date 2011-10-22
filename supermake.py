@@ -223,7 +223,7 @@ class CodeFile:
     m = re.findall(r'^#include "(.+?)"', self._content, re.MULTILINE)
     for header in m:
       headerDeps = getLibs(header)
-      if headerDeps: #Whole thing here is silly. Why doesn't python respect the assignment operator as a real operator with a return value?
+      if headerDeps: #Why doesn't python respect the assignment operator as a real operator with a return value?
         self._libraryDependencies.update(headerDeps)
       else: #Check for local inclusion
         header = os.path.relpath(os.path.join(self._directory, header))
@@ -560,11 +560,27 @@ class Supermake:
     CFlags += ' -L/usr/local/include'
 
     #Add the 'include' directory, if in use. 
-    if os.path.exists('include'):
+    if os.path.exists('include') and os.path.isdir('include'):
       CFlags += ' -Iinclude'
-    if os.path.exists('../include'):
+    if os.path.exists('../include') and os.path.isdir('../include'):
       CFlags += ' -I../include'
-
+     
+    #Add the 'lib' directory, if in use.
+    additionalLibrarySearchPaths = '' #CLI args passed to compiler later on
+    additionalLibrarySearchPath = ''
+    if os.path.exists('../lib') and os.path.isdir('../lib'):
+      additionalLibrarySearchPath = '../lib'
+    elif os.path.exists('lib') and os.path.isdir('lib'):
+      additionalLibrarySearchPath = 'lib'
+    if additionalLibrarySearchPath:
+      CFlags += ' -L'+additionalLibrarySearchPath
+      additionalLibrarySearchPaths += ' -Wl,-rpath,'+os.path.relpath(additionalLibrarySearchPath, os.path.dirname(self._buildName))
+      #Add the libraries in there. #This doesn't really belong here in GenerateMakefile, none of these include directory/lib directory related things do but it is the best simple solution I've thought of. Not gonig to go back and reinvent the entire library system when the only use here is a small special case.
+      for library in sorted(os.listdir(additionalLibrarySearchPath)):
+        m = re.match('lib(.+)\.(?:so|a)',library)
+        if m:
+          self._libraryDependencies.add('-l'+m.group(1)) #Should not be adding to self._libraryDependencies because GenerateMakefile shouldn't modify state (it is jsut taking the already defined abstract makefile and converting it into what gmake reads). See above for the root problem.
+    
     CFlags += ' ' + ' '.join(sorted(self._libraryDependencies))
 
     if self._options.debug:
@@ -589,13 +605,13 @@ class Supermake:
       #static library
       makefile += shellEscape(self._options.libraryName)+'.a: $(OBJS)\n'
       makefile += '\tar rcs '+shellEscape(self._options.libraryName)+'.a $(OBJS)\n\n'
-
+      
       #shared library
       makefile += shellEscape(self._options.libraryName) + '.so: $(OBJS)\n'
-      makefile += '\t'+compiler+' -shared -Wl,-soname,'+shellEscape(os.path.basename(self._options.libraryName))+'.so $(OBJS) -o '+shellEscape(self._options.libraryName)+'.so\n\n'
+      makefile += '\t'+compiler+' -shared'+additionalLibrarySearchPaths+' -Wl,-soname,'+shellEscape(os.path.basename(self._options.libraryName))+'.so $(OBJS) -o '+shellEscape(self._options.libraryName)+'.so\n\n'
     else:
       makefile += shellEscape(self._buildName) + ': $(OBJS)\n'
-      makefile += '\t'+compiler+' $(OBJS) $(FLAGS) -o '+shellEscape(self._buildName)+'\n\n'
+      makefile += '\t'+compiler+' $(OBJS) $(FLAGS)'+additionalLibrarySearchPaths+' -o '+shellEscape(self._buildName)+'\n\n'
       
     for sourceCodeFile in sorted(self._sourceCodeFiles, key=CodeFile.GetFullPath):
       objectFileName = shellEscape(os.path.join(sourceCodeFile.GetDirectory(), self._options.prefix+sourceCodeFile.GetName()+'.o'))
