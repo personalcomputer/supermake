@@ -73,12 +73,12 @@ libraries = { #There are a lot of problems with the current approach, but this i
   'Box2D.h': ['-lbox2d'],
   'openssl/sha.h': ['-lcrypto'],
   'gcrypt.h': ['-lgcrypt', '-lgpg-error'],
-  'mysql/mysql.h': ['`mysql_config --libs`'],
+  'mysql/mysql.h': ['`mysql_config --cflags --libs`'],
   'zmq.h': ['-lzmq'],
   'ncurses.h': ['-lncurses'],
   'google/profiler.h': ['-lprofiler'],
   
-  'SDL/': ['`sdl-config --libs`'],
+  'SDL/': ['`sdl-config --cflags--libs`'],
   'SDL/SDL_image.h': ['-lSDL_image'],
   'SDL/SDL_mixer.h': ['-lSDL_mixer'],
   'SDL/SDL_opengl.h': ['-lGL'],
@@ -87,7 +87,7 @@ libraries = { #There are a lot of problems with the current approach, but this i
   'SDL/SDL_thread.h': ['-pthread'],
   
   'GL/': ['-lGL'],
-  'GL/glfw.h': ['-lX11', '-lXrandr', '-pthread', '-lglfw'],
+  'GL/glfw.h': ['`pkg-config --cflags --libs libglfw`'],
   'GL/glu.h': ['-lGLU'],
   'GL/glew.h': ['-lGLEW', '-lGLU'],
   'GL/glut.h': ['-lGLUT', '-lGLU'],
