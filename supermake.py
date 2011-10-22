@@ -245,8 +245,8 @@ class CodeFile:
             self._codeFilesStore.add(includeCodeFile)
             
           self._codeFileDependencies.add(includeCodeFile)
-          self._codeFileDependencies |= includeCodeFile.GetCodeFileDependencies()
-          self._libraryDependencies |= includeCodeFile.GetLibraryDependencies()
+          self._codeFileDependencies.update(includeCodeFile.GetCodeFileDependencies())
+          self._libraryDependencies.update(includeCodeFile.GetLibraryDependencies())
 
         except NotCodeError:
           messenger.WarningMessage('Warning: Found unknown included file \''+header+'\'.')
@@ -505,7 +505,7 @@ class Supermake:
     
     libraryDependencies = set([])
     for codeFile in self._sourceCodeFiles:
-      self._libraryDependencies |= codeFile.GetLibraryDependencies()
+      self._libraryDependencies.update(codeFile.GetLibraryDependencies())
 
     self._language = 'c'
     if 'c++' in [sourceCodeFile.GetLanguage() for sourceCodeFile in codeFilesStore] or 'c++' in [sourceCodeFile.GetLanguage() for sourceCodeFile in self._sourceCodeFiles]:
