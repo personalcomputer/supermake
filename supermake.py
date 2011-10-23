@@ -77,6 +77,7 @@ libraries = { #There are a lot of problems with the current approach, but this i
   'zmq.h': ['-lzmq'],
   'ncurses.h': ['-lncurses'],
   'google/profiler.h': ['-lprofiler'],
+  'pthread.h': ['-pthread'],
   
   'SDL/': ['`sdl-config --cflags --libs`'],
   'SDL/SDL_image.h': ['-lSDL_image'],
