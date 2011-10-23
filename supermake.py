@@ -537,8 +537,8 @@ class Supermake:
         break; #breaks no-matter what, because if this file uses the generic one ('This program') then they all will
 
     #Guessing Strategy: If there is only one source file, name it after that. (unless it is main.cpp)
-    if len(self._sourceCodeFiles) == 1 and filename(self._sourceCodeFiles[0]) != 'main':
-      return fileName(self._sourceCodeFiles[0]) + '.run'
+    if len(self._sourceCodeFiles) == 1 and self._sourceCodeFiles[0].GetName() != 'main':
+      return self._sourceCodeFiles[0].GetName() + '.run'
     
     #Guessing Strategy: Name it after the parent folder.
     return os.path.basename(os.path.realpath('.'))+'.run'
@@ -584,7 +584,7 @@ class Supermake:
     CFlags += ' ' + ' '.join(sorted(self._libraryDependencies))
 
     if self._options.debug:
-      CFlags += ' -g -DDEBUG'# -pg' #-lprofiler #You'll have to use `--custom` guys
+      CFlags += ' -g -DDEBUG'# -pg'# -lprofiler' #You'll have to use `--custom` guys
 
     if self._options.warn:
       CFlags += ' -Wall'
