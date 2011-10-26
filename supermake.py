@@ -594,8 +594,7 @@ class Supermake:
       CFlags += ' -O3'
 
     if self._options.customCFlags:
-      makefile += 'CUSTOMFLAGS = ' + self._options.customCFlags + '\n'
-      CFlags += ' $(CUSTOMFLAGS)'
+      CFlags += ' ' + self._options.customCFlags
 
     makefile += 'FLAGS =' + CFlags + '\n\n'
 
