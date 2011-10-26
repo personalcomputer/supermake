@@ -478,6 +478,9 @@ class Supermake:
         if not compilationSuccesful:
           raise SupermakeError('Compilation failed. Ignoring --run.')
         self._Run()
+        
+      if not compilationSuccesful:
+        sys.exit(1);
             
     except SupermakeError as e:
       messenger.ErrorMessage(e.What())
