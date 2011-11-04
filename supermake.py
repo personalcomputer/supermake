@@ -81,6 +81,7 @@ libraries = { #There are a lot of problems with the current approach, but this i
   'google/profiler.h': ['-lprofiler'],
   'pthread.h': ['-pthread'],
   'math.h': ['-lm'],
+  'glib.h': ['`pkg-config --cflags --libs glib-2.0`'],
   
   'SDL/': ['`sdl-config --cflags --libs`'],
   'SDL/SDL_image.h': ['-lSDL_image'],
