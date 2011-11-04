@@ -74,10 +74,13 @@ libraries = { #There are a lot of problems with the current approach, but this i
   'openssl/sha.h': ['-lcrypto'],
   'gcrypt.h': ['-lgcrypt', '-lgpg-error'],
   'mysql/mysql.h': ['`mysql_config --cflags --libs`'],
+  'sqlite3.h': ['-lsqlite3'],
+  'sqlite.h': ['-lsqlite'],
   'zmq.h': ['-lzmq'],
   'ncurses.h': ['-lncurses'],
   'google/profiler.h': ['-lprofiler'],
   'pthread.h': ['-pthread'],
+  'math.h': ['-lm'],
   
   'SDL/': ['`sdl-config --cflags --libs`'],
   'SDL/SDL_image.h': ['-lSDL_image'],
