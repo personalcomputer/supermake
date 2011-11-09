@@ -18,7 +18,7 @@
 #
 # Supermake is created by personalcomputer <https://github.com/personalcomputer>
 #
-# Lots of this is unix-like only (possibly even Linux only), but it should be fairly simple to get the resulting makefiles to work with mingw.
+# Lots of this is unix-like only (possibly even Linux only), but it should be fairly simple to get the resulting makefiles to work with cygwin.
 #
 # bad code, all python's fault.
 
