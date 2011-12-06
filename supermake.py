@@ -83,6 +83,7 @@ libraries = { #There are a lot of problems with the current approach, but most a
   'math.h': ['-lm'],
   'glib.h': ['`pkg-config --cflags --libs glib-2.0`'],
   'SFML': ['-lsfml-graphics -lsfml-window -lsfml-system'],
+  'png': ['`libpng-config --cflags --ldflags --libs`'],
   
   'SDL/': ['`sdl-config --cflags --libs`'],
   'SDL/SDL_image.h': ['-lSDL_image'],
