@@ -103,6 +103,7 @@ libraries = { #There are a lot of problems with the current approach, but most a
   'Horde3D/Horde3DUtils.h': ['-lHorde3DUtils'],
   
   'boost/': ['-lboost_system'],
+  'boost/asio': ['-pthread'],
   'boost/regex.hpp': ['-lboost_regex'],
   'boost/filesystem': ['-lboost_filesystem'],
   'boost/serialization': ['-lboost_serialization'],
@@ -504,6 +505,13 @@ class Supermake:
       sourceHierarchy = [('.', os.listdir('.'))]
 
     for directory, filenames in sourceHierarchy:
+      '''try:
+        if directory[directory.rindex('/')+1:].startswith('unused'):
+          continue
+      except ValueError:
+        if directory.startswith('unused'):
+          continue''' #I need to check every containing directory for 'unused' as well for this to be sensible. It does work as-is, but will stupidly include ./unused x/thegame/ 
+      
       for filepath in [os.path.join(directory, filename) for filename in filenames if fileExtension(filename) in all_source_extensions]:
         try:
           self._sourceCodeFiles.append(CodeFile(filepath, codeFilesStore))
@@ -637,7 +645,7 @@ class Supermake:
     return makefile
     
   def _IsAutocleanNeeded(self):
-    '''Determine if `make clean` is needed (if the previously compiled object files were not compiled the same as they are set to be compiled now).'''
+    '''Determine if `make clean` is needed (if the previously compiled object files were not compiled the same as they are set to be compiled now, in regards to compiler flags).'''
     oldMakefile = open(self._oldMakefileName, 'r').read()
     if oldMakefile == self._makefile:
       needsAutoClean = False
