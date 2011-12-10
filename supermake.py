@@ -27,6 +27,7 @@ import os
 import sys
 import subprocess
 import shutil
+import tempfile
 
 usage = '''Usage: supermake [OPTION]...
 Automatically generate a basic makefile for C or C++ source files in the current
@@ -436,7 +437,7 @@ class Supermake:
       if not self._buildName:
         self._buildName = self._GuessBuildName()
         self._buildName = os.path.join(os.path.dirname(self._buildName), self._options.prefix+os.path.basename(self._buildName))
-        messenger.WarningMessage('Guessed a binary name '+self._buildName+' (use --binary=NAME to specify this yourself)')
+        messenger.WarningMessage('Guessed a binary name "'+self._buildName+'" (use --binary=NAME to specify this yourself)')
       
       # Create the Makefile :D
       self._makefile = self._GenerateMakefile()
@@ -457,9 +458,19 @@ class Supermake:
       if self._oldMakefileName:
         autoCleanNeeded = self._IsAutocleanNeeded()
         
-        shutil.copy(self._oldMakefileName, '/tmp/'+self._oldMakefileName+'.old')
-        messenger.WarningMessage('Overwriting previous makefile (previous makefile copied to /tmp/'+self._oldMakefileName+'.old in case you weren\'t ready for this!)')
-        
+        autoCleanNeeded = self._IsAutocleanNeeded()
+
+        oldMakefileBackupFd, oldMakefileBackupPath = tempfile.mkstemp(prefix='old_'+self._oldMakefileName+'_', text=True)
+        oldMakefileBackupFile = os.fdopen(oldMakefileBackupFd, 'w')
+
+        oldMakefileFile = open(self._oldMakefileName, 'r')
+        oldMakefileBackupFile.write(oldMakefileFile.read())
+
+        oldMakefileFile.close()
+        oldMakefileBackupFile.close()
+
+        messenger.WarningMessage('Overwriting previous makefile (previous makefile copied to "'+oldMakefileBackupPath+'" in case you weren\'t ready for this!)')
+
       # Write out new makefile
       makefileFile = open(self._options.prefix+'makefile', 'w')
       if not self._options.discrete:
