@@ -83,8 +83,7 @@ libraries = { #There are a lot of problems with the current approach, but most a
   'pthread.h': ['-pthread'],
   'math.h': ['-lm'],
   'glib.h': ['`pkg-config --cflags --libs glib-2.0`'],
-  'SFML': ['-lsfml-graphics -lsfml-window -lsfml-system'],
-  'png': ['`libpng-config --cflags --ldflags --libs`'],
+  'thread': ['-pthread'],
   
   'SDL/': ['`sdl-config --cflags --libs`'],
   'SDL/SDL_image.h': ['-lSDL_image'],
@@ -121,6 +120,10 @@ libraries = { #There are a lot of problems with the current approach, but most a
   'gtk/': ['`pkg-config --cflags --libs gtk+-2.0`'], #Sorry, no 3.0 support. Supermake simply is not capable or designed to support multiple library versions. (but it will only take changing a single character if you need it..)
   
   'gtkmm': ['`pkg-config gtkmm-2.4 --cflags --libs`'],
+  
+  'SFML': ['-lsfml-graphics -lsfml-window -lsfml-system'],
+    
+  'png': ['`libpng-config --cflags --ldflags --libs`'],
 }
 
 # constants that should be part of CodeFile but python is lame.
