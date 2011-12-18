@@ -13,20 +13,12 @@
 #   You should have received a copy of the GNU General Public License
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-#
-# The objective of Supermake is to be a simple user-friendly makefile generator that attempts its best to figure out what the user wants with well thought out aggressive defaults that work for most basic compilation needs. Additionally supermake provides the option to automatically perform the rest of the build process, even launching the resultant binary for you! I feel that supermake is now fairly mature and accomplishes this objective.
-#
 # Supermake is created by personalcomputer <https://github.com/personalcomputer>
-#
-# Lots of this is unix-like only (possibly even Linux only), but it should be fairly simple to get the resulting makefiles to work with cygwin.
-#
-# bad code, all python's fault.
 
 import re
 import os
 import sys
 import subprocess
-import shutil
 import tempfile
 
 usage = '''Usage: supermake [OPTION]...
@@ -83,7 +75,8 @@ libraries = { #There are a lot of problems with the current approach, but most a
   'pthread.h': ['-pthread'],
   'math.h': ['-lm'],
   'glib.h': ['`pkg-config --cflags --libs glib-2.0`'],
-  'thread': ['-pthread'],
+  'SFML': ['-lsfml-graphics -lsfml-window -lsfml-system'],
+  'png': ['`libpng-config --cflags --ldflags --libs`'],
   
   'SDL/': ['`sdl-config --cflags --libs`'],
   'SDL/SDL_image.h': ['-lSDL_image'],
@@ -103,7 +96,6 @@ libraries = { #There are a lot of problems with the current approach, but most a
   'Horde3D/Horde3DUtils.h': ['-lHorde3DUtils'],
   
   'boost/': ['-lboost_system'],
-  'boost/asio': ['-pthread'],
   'boost/regex.hpp': ['-lboost_regex'],
   'boost/filesystem': ['-lboost_filesystem'],
   'boost/serialization': ['-lboost_serialization'],
@@ -120,10 +112,6 @@ libraries = { #There are a lot of problems with the current approach, but most a
   'gtk/': ['`pkg-config --cflags --libs gtk+-2.0`'], #Sorry, no 3.0 support. Supermake simply is not capable or designed to support multiple library versions. (but it will only take changing a single character if you need it..)
   
   'gtkmm': ['`pkg-config gtkmm-2.4 --cflags --libs`'],
-  
-  'SFML': ['-lsfml-graphics -lsfml-window -lsfml-system'],
-    
-  'png': ['`libpng-config --cflags --ldflags --libs`'],
 }
 
 # constants that should be part of CodeFile but python is lame.
@@ -138,6 +126,10 @@ cpp_exclusive_extensions = (cpp_header_extensions | cpp_source_extensions) - (c_
 all_source_extensions    = cpp_source_extensions | c_source_extensions
 all_header_extensions    = cpp_header_extensions | c_header_extensions
 all_code_extensions      = all_source_extensions | all_header_extensions
+
+make_cmd = {'nt':'mingw32-make', 'posix':'make'}[os.name]
+forcedelete_cmd = {'nt':'del', 'posix':'rm -f'}[os.name]
+executable_extension = {'nt':'.exe', 'posix':''}[os.name]
 
 class Messenger():
   '''Sends properly prefaced messages to the console'''
@@ -176,13 +168,11 @@ class NotCodeError(SupermakeError):
   
 class OptionsError(SupermakeError):
   pass
-  
-quote_pos = re.compile('(?=[^-0-9a-zA-Z_./\n])')
-def shellEscape(string): #Slightly modified version of Stack Overflow user Dave Abrahams's solution. <http://stackoverflow.com/questions/967443/python-module-to-shellquote-unshellquote>
-  if string:
-    return quote_pos.sub('\\\\', string).replace('\n',"'\n'")
-  else:
-    return "''"
+
+legalShellCharactersPattern = {'posix':r'([^-0-9a-zA-Z_./\n])', 'nt':r'([^-0-9a-zA-Z_./\\\n])'}[os.name]
+
+def shellEscape(string):
+  return re.sub(legalShellCharactersPattern, r'\\\1', string);
   #Q: Why not just use quotes? A: make does not like quotes.
             
 def fileExtension(basename): #Similar to os.path.basename
@@ -243,8 +233,8 @@ class CodeFile:
           header = header
         elif os.path.exists(os.path.join('include', header)): #hacky
           header = os.path.join('include', header)
-        elif os.path.exists(os.path.join('../include', header)):
-          header = os.path.join('../include', header)
+        elif os.path.exists(os.path.join('..','include',header)):
+          header = os.path.join('..','include',header)
         else: #otherwise it is like #include "stdlib.h"
           continue
           
@@ -415,7 +405,7 @@ class Options: #Attempted to overengineer this way too many times, still want to
         self.discrete = True
         continue
       
-      raise OptionsError('Invalid argument: '+argument)
+      raise OptionsError('Invalid argument: '+argument+' (For help, see --help)')
     
 class Supermake:
   '''Supermake :)'''
@@ -440,7 +430,7 @@ class Supermake:
       if not self._buildName:
         self._buildName = self._GuessBuildName()
         self._buildName = os.path.join(os.path.dirname(self._buildName), self._options.prefix+os.path.basename(self._buildName))
-        messenger.WarningMessage('Guessed a binary name "'+self._buildName+'" (use --binary=NAME to specify this yourself)')
+        messenger.WarningMessage('Guessed a binary name '+self._buildName+' (use --binary=NAME to specify this yourself)')
       
       # Create the Makefile :D
       self._makefile = self._GenerateMakefile()
@@ -460,20 +450,18 @@ class Supermake:
       autoCleanNeeded = False
       if self._oldMakefileName:
         autoCleanNeeded = self._IsAutocleanNeeded()
-        
-        autoCleanNeeded = self._IsAutocleanNeeded()
 
         oldMakefileBackupFd, oldMakefileBackupPath = tempfile.mkstemp(prefix='old_'+self._oldMakefileName+'_', text=True)
         oldMakefileBackupFile = os.fdopen(oldMakefileBackupFd, 'w')
 
-        oldMakefileFile = open(self._oldMakefileName, 'r')
+       	oldMakefileFile = open(self._oldMakefileName, 'r')
         oldMakefileBackupFile.write(oldMakefileFile.read())
 
         oldMakefileFile.close()
         oldMakefileBackupFile.close()
 
         messenger.WarningMessage('Overwriting previous makefile (previous makefile copied to "'+oldMakefileBackupPath+'" in case you weren\'t ready for this!)')
-
+        
       # Write out new makefile
       makefileFile = open(self._options.prefix+'makefile', 'w')
       if not self._options.discrete:
@@ -485,9 +473,9 @@ class Supermake:
       if autoCleanNeeded:
         messenger.Message('Makefiles critically differ. Executing command: make clean')
         if self._options.prefix:
-          os.system('make -f '+self._options.prefix+'makefile clean')
+          os.system(make_cmd+' -f '+self._options.prefix+'makefile clean')
         else:
-          os.system('make clean')
+          os.system(make_cmd+' clean')
 
       # Compile
       compilationSuccesful = False
@@ -519,13 +507,6 @@ class Supermake:
       sourceHierarchy = [('.', os.listdir('.'))]
 
     for directory, filenames in sourceHierarchy:
-      '''try:
-        if directory[directory.rindex('/')+1:].startswith('unused'):
-          continue
-      except ValueError:
-        if directory.startswith('unused'):
-          continue''' #I need to check every containing directory for 'unused' as well for this to be sensible. It does work as-is, but will stupidly include ./unused x/thegame/ 
-      
       for filepath in [os.path.join(directory, filename) for filename in filenames if fileExtension(filename) in all_source_extensions]:
         try:
           self._sourceCodeFiles.append(CodeFile(filepath, codeFilesStore))
@@ -533,7 +514,7 @@ class Supermake:
           pass
           
     if not self._sourceCodeFiles:
-      raise SupermakeError('No sourcecode found. For help see --help.')
+      raise SupermakeError('No sourcecode found. For help, see --help.')
     
     libraryDependencies = set([])
     for codeFile in self._sourceCodeFiles:
@@ -548,35 +529,43 @@ class Supermake:
     
   def _GuessBuildName(self):
     '''Guess what the project is called based off of heuristics involving surrounding files and directory names.'''
-    #Guessing Strategy: Name the binary after the containing folder (if sourcecode is under 'src' path then it is likely it is part of a larger folder named as the projectname)
-    #Eg: if the source directory[where Supermake was ran from] is at say ~/projects/DeathStar/src/ then this will create the binary at ~/projects/DeathStar/DeathStar.run
-    if os.path.basename(os.getcwd()) == 'src' or os.path.basename(os.getcwd()) == 'source':
-      binaryName = os.path.basename(os.path.realpath('..')) + '.run'
-      if os.path.isdir('../bin'):
-        binaryName = '../bin/'+binaryName
-      elif os.path.isdir('./bin'):
-        binaryName = './bin/'+binaryName
-      else:
-        binaryName = '../'+binaryName
-      return binaryName
-
-    #Guessing Strategy: Look for the common GPL disclaimer and name it after the specified project name.
-    for codeFile in self._sourceCodeFiles:
-      m = re.search('\s*(.+) is free software(?:;)|(?::) you can redistribute it and/or modify', codeFile.GetContent())
-      if m:
-        if m.group(1) != 'This program' and m.group(1) != 'This software':
-          return m.group(1)
-        break; #breaks no-matter what, because if this file uses the generic one ('This program') then they all will
-
-    #Guessing Strategy: If there is only one source file, name it after that. (unless it is main.cpp)
-    if len(self._sourceCodeFiles) == 1 and self._sourceCodeFiles[0].GetName() != 'main':
-      return self._sourceCodeFiles[0].GetName() + '.run'
+    binaryName = ''
     
-    #Guessing Strategy: Name it after the parent folder.
-    return os.path.basename(os.path.realpath('.'))+'.run'
+    if not binaryName:
+      #Guessing Strategy: Name the binary after the containing folder (if sourcecode is under 'src' path then it is likely it is part of a larger folder named as the projectname)
+      #Eg: if the source directory[where Supermake was ran from] is at say ~/projects/DeathStar/src/ then this will create the binary at ~/projects/DeathStar/DeathStar.run
+      if os.path.basename(os.getcwd()) == 'src' or os.path.basename(os.getcwd()) == 'source':
+        binaryName = os.path.basename(os.path.realpath('..'))
+        if os.path.isdir(os.path.join('..','bin')):
+          binaryName = os.path.join('..','bin',binaryName)
+        elif os.path.isdir('bin'):
+          binaryName = os.path.join('bin',binaryName)
+        else:
+          binaryName = os.path.join('..',binaryName)
+        
+    if not binaryName:
+      #Guessing Strategy: Look for the common GPL disclaimer and name it after the specified project name.
+      for codeFile in self._sourceCodeFiles:
+        m = re.search('\s*(.+) is free software(?:;)|(?::) you can redistribute it and/or modify', codeFile.GetContent())
+        if m:
+          if m.group(1) != 'This program' and m.group(1) != 'This software':
+            binaryName = m.group(1)
+            break
 
-    #Guessing Strategy: Call it something totally generic.
-    return 'program.run'
+    if not binaryName:
+      #Guessing Strategy: If there is only one source file, name it after that. (unless it is main.cpp)
+      if len(self._sourceCodeFiles) == 1 and self._sourceCodeFiles[0].GetName() != 'main':
+        binaryName = self._sourceCodeFiles[0].GetName() + executable_extension
+    
+    if not binaryName:
+      #Guessing Strategy: Name it after the parent folder.
+      binaryName = os.path.basename(os.path.realpath('.'))
+
+    if not binaryName:
+      #Guessing Strategy: Call it something totally generic.
+      binaryName = 'program'
+      
+    return binaryName + executable_extension
     
   def _GenerateMakefile(self):
     '''From some abstract options, generate the actual text of a gnu makefile.'''#Not sure removing this from its own unique class was a good idea. Flow of information now isn't explicit... :|
@@ -589,19 +578,20 @@ class Supermake:
     makefile += '\n'
 
     CFlags = ''
-    CFlags += ' -L/usr/local/include'
+    if os.name == 'posix':
+      CFlags += ' -L/usr/local/include'
 
     #Add the 'include' directory, if in use. 
     if os.path.exists('include') and os.path.isdir('include'):
       CFlags += ' -Iinclude'
-    if os.path.exists('../include') and os.path.isdir('../include'):
-      CFlags += ' -I../include'
+    if os.path.exists(os.path.join('..','include')) and os.path.isdir(os.path.join('..','include')):
+      CFlags += ' -I'+os.path.join('..','include')
      
     #Add the 'lib' directory, if in use.
     additionalLibrarySearchPaths = '' #CLI args passed to compiler later on
     additionalLibrarySearchPath = ''
-    if os.path.exists('../lib') and os.path.isdir('../lib'):
-      additionalLibrarySearchPath = '../lib'
+    if os.path.exists(os.path.join('..','lib')) and os.path.isdir(os.path.join('..','lib')):
+      additionalLibrarySearchPath = os.path.join('..','lib')
     elif os.path.exists('lib') and os.path.isdir('lib'):
       additionalLibrarySearchPath = 'lib'
     if additionalLibrarySearchPath:
@@ -609,7 +599,7 @@ class Supermake:
       additionalLibrarySearchPaths += ' -Wl,-rpath,'+os.path.relpath(additionalLibrarySearchPath, os.path.dirname(self._buildName))
       #Add the libraries in there. #This doesn't really belong here in GenerateMakefile, none of these include directory/lib directory related things do but it is the best simple solution I've thought of. Not gonig to go back and reinvent the entire library system when the only use here is a small special case.
       for library in sorted(os.listdir(additionalLibrarySearchPath)):
-        m = re.match('lib(.+)\.(?:so|a)',library)
+        m = re.match('lib([^\.]+)\.(?:so|a)',library)
         if m:
           self._libraryDependencies.add('-l'+m.group(1)) #Should not be adding to self._libraryDependencies because GenerateMakefile shouldn't modify state (it is jsut taking the already defined abstract makefile and converting it into what gmake reads). See above for the root problem.
     
@@ -629,7 +619,7 @@ class Supermake:
 
     makefile += 'FLAGS =' + CFlags + '\n\n'
 
-    compiler = {'c++':'g++','c':'gcc'}[self._language] #python! :D?
+    compiler = {'c++':'g++','c':'gcc'}[self._language]
     
     if self._options.libraryName:
       makefile += 'all: '+shellEscape(self._options.libraryName)+'.a '+shellEscape(self._options.libraryName)+'.so\n\n'
@@ -639,7 +629,7 @@ class Supermake:
       
       #shared library
       makefile += shellEscape(self._options.libraryName) + '.so: $(OBJS)\n'
-      makefile += '\t'+compiler+' -shared'+additionalLibrarySearchPaths+' -Wl,-soname,'+shellEscape(os.path.basename(self._options.libraryName))+'.so $(OBJS) -o '+shellEscape(self._options.libraryName)+'.so\n\n'
+      makefile += '\t'+compiler+' -shared -Wl,-soname,'+shellEscape(os.path.basename(self._options.libraryName))+'.so $(OBJS) -o '+shellEscape(self._options.libraryName)+'.so\n\n'
     else:
       makefile += shellEscape(self._buildName) + ': $(OBJS)\n'
       makefile += '\t'+compiler+' $(OBJS) $(FLAGS)'+additionalLibrarySearchPaths+' -o '+shellEscape(self._buildName)+'\n\n'
@@ -649,17 +639,18 @@ class Supermake:
       makefile += objectFileName+': '+shellEscape(sourceCodeFile.GetFullPath())+' '+' '.join([shellEscape(codeFile.GetFullPath()) for codeFile in sorted(sourceCodeFile.GetCodeFileDependencies(), key=CodeFile.GetFullPath)])+'\n'
       makefile += '\t'+compiler+' $(FLAGS) -c '+shellEscape(sourceCodeFile.GetFullPath())+' -o '+objectFileName+'\n\n'
 
+    makefile += 'clean:\n\t'+forcedelete_cmd
     if self._options.libraryName:
-      makefile += 'clean:\n\trm -f '+shellEscape(self._options.libraryName)+'.a '+shellEscape(self._options.libraryName)+'.so *.o'
+      makefile +=' '+shellEscape(self._options.libraryName)+'.a '+shellEscape(self._options.libraryName)+'.so *.o'
     else:
-      makefile += 'clean:\n\trm -f '+shellEscape(self._buildName)+' $(OBJS)'
+      makefile +=' '+shellEscape(self._buildName)+' $(OBJS)'
     
     makefile += '\n'
     
     return makefile
     
   def _IsAutocleanNeeded(self):
-    '''Determine if `make clean` is needed (if the previously compiled object files were not compiled the same as they are set to be compiled now, in regards to compiler flags).'''
+    '''Determine if `make clean` is needed (if the previously compiled object files were not compiled the same as they are set to be compiled now).'''
     oldMakefile = open(self._oldMakefileName, 'r').read()
     if oldMakefile == self._makefile:
       needsAutoClean = False
@@ -676,7 +667,7 @@ class Supermake:
           return True
   
   def _Compile(self):
-    cmd = ['make']
+    cmd = [make_cmd]
     if self._options.prefix:
       cmd.extend(['-f',shellEscape(self._options.prefix+'makefile')])
     return (subprocess.call(cmd) == 0)
@@ -684,15 +675,20 @@ class Supermake:
   def _Run(self):
     (binaryParentFolder, binaryFilename) = os.path.split(self._buildName)
     
+    executeBinaryCmd = binaryFilename
+    if os.name == 'posix':
+      executeBinaryCmd = './'+executeBinaryCmd
+    executeBinaryCmd = shellEscape(executeBinaryCmd)
+    
     if self._options.debug:
       cmdargs = ['gdb']
       if self._options.binaryArgs:
         cmdargs.append('--args')
-      cmdargs.append('./'+shellEscape(binaryFilename))
+      cmdargs.append(executeBinaryCmd)
       if self._options.binaryArgs:
         cmdargs.extend(self._options.binaryArgs)
     else:
-      cmdargs = [shellEscape('./'+binaryFilename)]
+      cmdargs = [executeBinaryCmd]
       cmdargs.extend(self._options.binaryArgs)
     
     if binaryParentFolder:
