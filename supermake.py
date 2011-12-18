@@ -590,9 +590,9 @@ class Supermake:
     #Add the 'lib' directory, if in use.
     additionalLibrarySearchPaths = '' #CLI args passed to compiler later on
     additionalLibrarySearchPath = ''
-    if os.path.exists(os.path.join('..','lib')) and os.path.isdir(os.path.join('..','lib')):
+    if os.path.exists(os.path.join('..','lib')) and os.path.isdir(os.path.join('..','lib')) and os.listdir('lib'):
       additionalLibrarySearchPath = os.path.join('..','lib')
-    elif os.path.exists('lib') and os.path.isdir('lib'):
+    elif os.path.exists('lib') and os.path.isdir('lib') and os.listdir('lib'):
       additionalLibrarySearchPath = 'lib'
     if additionalLibrarySearchPath:
       CFlags += ' -L'+additionalLibrarySearchPath
