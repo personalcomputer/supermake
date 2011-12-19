@@ -427,7 +427,7 @@ class Supermake:
       
       # Name binary
       self._buildName = self._options.binaryName
-      if not self._buildName:
+      if not self._buildName or self._options.libraryName:
         self._buildName = self._GuessBuildName()
         self._buildName = os.path.join(os.path.dirname(self._buildName), self._options.prefix+os.path.basename(self._buildName))
         messenger.WarningMessage('Guessed a binary name '+self._buildName+' (use --binary=NAME to specify this yourself)')
