@@ -461,7 +461,11 @@ class Supermake:
         oldMakefileBackupFile.close()
 
         messenger.WarningMessage('Overwriting previous makefile (previous makefile copied to "'+oldMakefileBackupPath+'" in case you weren\'t ready for this!)')
-        
+      else:
+        for filename in os.listdir('.'):
+          if filename.endswith('.o'):
+            autoCleanNeeded = True
+            break
       # Write out new makefile
       makefileFile = open(self._options.prefix+'makefile', 'w')
       if not self._options.discrete:
@@ -471,7 +475,10 @@ class Supermake:
     
       # Autoclean
       if autoCleanNeeded:
-        messenger.Message('Makefiles critically differ. Executing command: make clean')
+        if self._oldMakefileName:
+          messenger.Message('Makefiles critically differ. Cleaning old build files.')
+        else:
+          messenger.Message('Cleaning old build files.')
         if self._options.prefix:
           os.system(make_cmd+' -f '+self._options.prefix+'makefile clean')
         else:
