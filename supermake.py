@@ -367,9 +367,13 @@ class Options: #Attempted to overengineer this way too many times, still want to
         
       if argument.startswith('--lib='):
         self.libraryName = argument[argument.find('=')+1:]
-        basename = os.path.basename(self.libraryName)
-        if not basename.startswith('lib'):
-          self.libraryName = os.path.join(os.path.dirname(self.libraryName), 'lib'+ basename)
+        libdirname, libbasename = os.path.split(self.libraryName)
+        if libbasename.endswith('.a') or libbasename.endswith('.so'):
+          self.libraryName = os.path.join(libdirname, fileName(libbasename))
+          messenger.NoticeMessage('Library file extension unnecessarily specified. Both "'+self.libraryName+'.so", and "'+self.libraryName+'.a". will be created.')
+          libdirname, libbasename = os.path.split(self.libraryName)
+        if not libbasename.startswith('lib'):
+          self.libraryName = os.path.join(libdirname, 'lib'+ libbasename)
           messenger.NoticeMessage('Prepending "lib" to the library name: "'+self.libraryName+'.so", and "'+self.libraryName+'.a".')
         continue
       
