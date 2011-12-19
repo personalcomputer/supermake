@@ -480,9 +480,9 @@ class Supermake:
       # Autoclean
       if autoCleanNeeded:
         if self._oldMakefileName:
-          messenger.Message('Makefiles critically differ. Cleaning old build files.')
+          messenger.NoticeMessage('Makefiles critically differ. Cleaning old build files.')
         else:
-          messenger.Message('Cleaning old build files.')
+          messenger.NoticeMessage('Cleaning old build files.')
         if self._options.prefix:
           os.system(make_cmd+' -f '+self._options.prefix+'makefile clean')
         else:
