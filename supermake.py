@@ -39,7 +39,7 @@ the build process.
                   Supermake will guess an acceptable binary name.
   --custom=FLAGS  Compile everything with additional custom gcc FLAGS. This can
                   be used, for example, for specifying extra -D defines.
-  --lib=NAME      Build the project as a library instead. NAME specifies the
+  --library=NAME  Build the project as a library instead. NAME specifies the
                   name and path of the library (Ex: ../lib/libamazing), similar
                   to --binary. This automatically creates both shared (.so) and
                   static (.a) library types, so do not specify an extension in
@@ -325,13 +325,13 @@ class Options: #Attempted to overengineer this way too many times, still want to
     '''Users can supply an incompatible combination otherwise valid options, this checks and throws an exception if so.'''
     
     if self.libraryName and self.binaryName:
-      raise OptionsError('Both --lib and --binary specified.')
+      raise OptionsError('Both --library and --binary specified.')
       
     if self.printMakefile and self.make:
       raise OptionsError('--print and --make specified but --print suppresses writing to makefile as required by --make.')
 
     if self.run and self.libraryName:
-      raise OptionsError('--run specified, but you are building a library (--lib specified).')
+      raise OptionsError('--run specified, but you are building a library (--library specified).')
 
     if self.run and not self.make:
       raise OptionsError('--run specified, but --run requires --make, which is unspecified.')
@@ -365,7 +365,7 @@ class Options: #Attempted to overengineer this way too many times, still want to
         self.overrideLibraryDependencies = True
         continue
         
-      if argument.startswith('--lib='):
+      if argument.startswith('--library=') or argument.startswith('--lib='):
         self.libraryName = argument[argument.find('=')+1:]
         libdirname, libbasename = os.path.split(self.libraryName)
         if libbasename.endswith('.a') or libbasename.endswith('.so'):
