@@ -389,7 +389,9 @@ class Options: #Attempted to overengineer this way too many times, still want to
         continue
         
       if argument.startswith('--custom='):
-        self.customCFlags = argument[argument.find('=')+1:]
+        if self.customCFlags:
+          self.customCFlags += ' '
+        self.customCFlags += argument[argument.find('=')+1:]
         continue
         
       if argument == '--print':
