@@ -251,7 +251,7 @@ class CodeFile:
           self._libraryDependencies.update(includeCodeFile.GetLibraryDependencies())
 
         except NotCodeError:
-          messenger.WarningMessage('Warning: Found unknown included file \''+header+'\'.')
+          #messenger.WarningMessage('Found unknown included file \''+header+'\'.')
 
   def GetLanguage(self):
     '''Return the language of the code in this CodeFile, either C or C++.''' 
@@ -370,11 +370,11 @@ class Options: #Attempted to overengineer this way too many times, still want to
         libdirname, libbasename = os.path.split(self.libraryName)
         if libbasename.endswith('.a') or libbasename.endswith('.so'):
           self.libraryName = os.path.join(libdirname, fileName(libbasename))
-          messenger.NoticeMessage('Library file extension unnecessarily specified. Both "'+self.libraryName+'.so", and "'+self.libraryName+'.a". will be created.')
+          messenger.NoticeMessage('Library file extension unnecessarily specified. Both \''+self.libraryName+'.so\', and \''+self.libraryName+'.a\'. will be created.')
           libdirname, libbasename = os.path.split(self.libraryName)
         if not libbasename.startswith('lib'):
           self.libraryName = os.path.join(libdirname, 'lib'+ libbasename)
-          messenger.NoticeMessage('Prepending "lib" to the library name: "'+self.libraryName+'.so", and "'+self.libraryName+'.a".')
+          messenger.NoticeMessage('Prepending \'lib\' to the library name: \''+self.libraryName+'.so\', and \''+self.libraryName+'.a\'.')
         continue
       
       if argument.startswith('--binary='):
@@ -409,7 +409,7 @@ class Options: #Attempted to overengineer this way too many times, still want to
         self.discrete = True
         continue
       
-      raise OptionsError('Invalid argument: '+argument+' (For help, see --help)')
+      raise OptionsError('Unrecognized argument: \''+argument+'\' (For help, see --help)')
     
 class Supermake:
   '''Supermake :)'''
@@ -434,7 +434,7 @@ class Supermake:
       if not self._buildName and not self._options.libraryName:
         self._buildName = self._GuessBuildName()
         self._buildName = os.path.join(os.path.dirname(self._buildName), self._options.prefix+os.path.basename(self._buildName))
-        messenger.WarningMessage('Guessed a binary name '+self._buildName+' (use --binary=NAME to specify this yourself)')
+        messenger.WarningMessage('Guessed a binary name \''+self._buildName+'\' (use --binary=NAME to specify this yourself)')
       
       # Create the Makefile :D
       self._makefile = self._GenerateMakefile()
@@ -464,7 +464,7 @@ class Supermake:
         oldMakefileFile.close()
         oldMakefileBackupFile.close()
 
-        messenger.WarningMessage('Overwriting previous makefile (previous makefile copied to "'+oldMakefileBackupPath+'" in case you weren\'t ready for this!)')
+        messenger.WarningMessage('Overwriting previous makefile (previous makefile copied to \''+oldMakefileBackupPath+'\' in case you weren\'t ready for this!)')
       else:
         for filename in os.listdir('.'):
           if filename.endswith('.o'):
