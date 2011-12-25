@@ -109,9 +109,9 @@ libraries = { #There are a lot of problems with the current approach, but most a
   
   'OIS/': ['-lOIS'],
   
-  'gtk/': ['`pkg-config --cflags --libs gtk+-2.0`'], #Sorry, no 3.0 support. Supermake simply is not capable or designed to support multiple library versions. (but it will only take changing a single character if you need it..)
+  'gtk/': ['`pkg-config --cflags --libs gtk+-3.0`'], #Sorry, no 2.x support. Supermake simply is not capable or designed to support multiple library versions. (but it will only take changing a single character if you need it..)
   
-  'gtkmm': ['`pkg-config gtkmm-2.4 --cflags --libs`'],
+  'gtkmm': ['`pkg-config gtkmm-3.0 --cflags --libs`'],
 }
 
 # constants that should be part of CodeFile but python is lame.
