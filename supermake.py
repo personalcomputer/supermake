@@ -566,7 +566,7 @@ class Supermake:
     if not binaryName:
       #Guessing Strategy: Look for the common GPL disclaimer and name it after the specified project name.
       for codeFile in self._sourceCodeFiles:
-        m = re.search('\s*(.+) is free software(?:;)|(?::) you can redistribute it and/or modify', codeFile.GetContent())
+        m = re.search(r'[\\\*\s]*(.+) is free software(?:;)|(?::) you can redistribute it and/or modify', codeFile.GetContent())
         if m:
           if m.group(1) != 'This program' and m.group(1) != 'This software':
             binaryName = m.group(1)
