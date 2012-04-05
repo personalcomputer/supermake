@@ -3,7 +3,9 @@ Supermake Readme
 
 Supermake is a simple makefile generator for C and C++ that goes above and beyond to _streamline_ and _simplify_ the entire tedious build process.
 
-Try it out with `supermake --print`, which will automatically generate a makefile for the sourcecode in your current directory and print out the generated makefile to the console, without overwriting anything.
+Try it out with `supermake`. Really. Supermake is designed to do everything for you automatically with aggressive defaults. Run this and you'll go straight from all the sourcecode in your current directory to running software. As hard as running `python` or `ruby`, but C/C++.
+
+If you already have a build system in place, just check what it would generate with `supermake` --print`, which will automatically generate a makefile for the sourcecode in your current directory and print out the generated makefile to the console, without overwriting anything.
 
 **For full proper usage information, see `supermake --help`.**
 
@@ -17,22 +19,22 @@ Try it out with `supermake --print`, which will automatically generate a makefil
 * Build static and dynamic libraries.
 
 ### Example Usage
-* `supermake` (Really. Supermake is designed to do everything for you automatically with aggressive defaults. Add `--make` and `--run` to this and boom, you go straight from sourcecode to running software.)
-* `supermake --binary=../bin/myprogram.run --debug --warn --make`
-* `supermake --binary=myprogram.run --make --run`
+* `supermake` (Really. Supermake is designed to do everything for you automatically with aggressive defaults. Run this and you'll go straight from all the sourcecode in your current directory to running software. As hard as running `python` or `ruby`, but C/C++)
+* `supermake --binary=../bin/myprogram.run --debug --warn`
+* `supermake --binary=myprogram.run -R --custom=-DTEST`
 
 **Again, for full proper usage information, see `supermake --help`.**
 
 ### Notes/Troubleshooting
 Supermake is written for python 3, but should (and seems to, from tests) work in python 2 as well.
 
-Supermake is written for linux, but should work acceptably within a windows/mingw32 environment as well.
+Supermake is written for linux, but should work acceptably within a windows/mingw32 environment as well. MacOSX is wholy untested.
 
 If Supermake fails to recognize some libraries you are using (there unfortunately won't be an error message on this until the compilation stage), you can manually add them to the `libraries` datastructure (definition near top of supermake.py). Supermake can't support every single library out there, but I try to support the ones I use most myself, at least. Send me your Github pull request with the additional library support and I'll gladly accept it.
 
-A known bug with Supermake is that it cannot preprocess potentially disabled blocks of code from `#ifdefs` or `#ifs` and cannot understand c-style comments (`/*` and `*/`). This may lead to unwanted library inclusions if you use different libraries in your project depending upon preprocessor `#ifdefs` or `#ifs` or has such includes commented out with C-style comments. The undocumented `--override-depend` + `--custom=-llibrary -llibrary` workaround is available though if this bug is causing problems.
+A known bug with Supermake is that it cannot preprocess code, so potentially disabled blocks of code from `#ifdefs` or `#ifs` and c-style comments (`/*` and `*/`) will still be read. This may lead to unwanted library inclusions if you use different libraries in your project depending upon preprocessor `#ifdefs` or `#ifs` or have such includes commented out with C-style comments. The undocumented `--override-depend` + `--custom=-llibrary -llibrary`(remember to escape the spaces for bash!) workaround is available though if this bug is causing problems.
 
-Lastly, it is worth noting that Supermake automatically includes libraries from /usr/local/lib, and then if `--run` is specified it sets LD_LIBRARY_PATH accordingly as well.
+Lastly, it is worth noting that Supermake automatically includes libraries from /usr/local/lib, and sets LD_LIBRARY_PATH to /usr/local/lib when running. I've yet to encounter a real situation on a beginner's system where this causes problems.
 
 ### Install
 To use Supermake effectively, you will need to need to create a symbolic link somewhere in your $PATH that points to supermake.py. This allows you to execute the command `supermake` from any working directory.
