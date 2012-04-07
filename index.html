@@ -1,0 +1,52 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+  <meta charset="utf-8" />
+  
+  <title>Supermake</title>
+  <meta name="description" content="Supermake is a C and C++ 'build tool' focused on radical ease of use. You run a single command and get running software." />
+  <link href='http://fonts.googleapis.com/css?family=Orbitron' rel='stylesheet' type='text/css'>
+  <link href="style.css" rel="stylesheet" type="text/css" media="screen" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+</head>
+<body>
+  <a href="https://github.com/personalcomputer/supermake"><div id="fork-me"></div></a>
+  <div id="outer-container">
+    <h1 id="supermake-title" class="background-bit">SUPERMAKE</h1>
+    <div class="dark-block">
+      <h2>One command and all of your C and <span>C++</span> files will become a running piece of software.</h2>
+    </div>
+    <div id="the-command"><span class="cli">$ supermake</span></div>
+    <div class="dark-block">
+      <h2>Really. No makefiles, no library linking issues, and no ldflags &ndash; Supermake takes care of all that for you, automatically.</h2>
+    </div>
+    <div class="light-block">
+      <p>It works by inspecting only the actual source-code in your current working directory to determine:</p>
+      <div id="illustration-papergears" class="background-bit"></div>
+      <ul>
+        <li>inter-file dependencies</li>
+        <li>library dependencies</li>
+        <li>needed linker flags</li>
+      </ul>
+      <div id="illustration-rocket" class="background-bit"></div>
+      <p>and maybe even guess a suitable name for the resultant executable binary. It'll then write down this information as a Unix makefile and then run through the makefile, compiling the project. Once that finishes, Supermake will execute the binary. It's that simple, and can be thought of as doing to a pile of .c's and .cpp's what the Ruby or Python interpreters do to a pile of .rb's and .py's in terms of ease of use.</p>
+    </div>
+    <div class="dark-block">
+      <h2><a id="download-link" href="https://github.com/personalcomputer/supermake/tarball/master">Download supermake.tar.gz</a></h2>
+      <div id="illustration-box" class="background-bit"></div>
+      <p>Requires Linux (Win &amp; Mac support forthcoming) and a capable build environment. (<span class="cli">sudo apt-get install build-essential</span> should do it if you're on Ubuntu)</p>
+    </div>
+    <div class="bubble-pointer"></div>
+    <div class="light-block bubble">
+      <p>But, take note, Supermake's reliance upon the guessing and heuristics necessary to bandage this pain-point of C and C++ make it sadly unsuitable for more involved projects' build requirements. If you have multiple "solutions", use obscure libraries, or employ a complicated directory structure, Supermake won't fly. But for simpler build requirements, Supermake will soar.</p>
+      <div id="illustration-bandage" class="background-bit"></div>
+    </div>
+    <div id="footer">
+      Supermake is an open source project created by <a href="http://johngm.com">John Miller</a> | Watch <a href="https://github.com/personalcomputer/supermake">Supermake on GitHub</a> | <a href="mailto:john@johngm.com">Contact me</a>, I'd love to chat
+    </div>
+  </div>
+  <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+</body>
+</html>
