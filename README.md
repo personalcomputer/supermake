@@ -1,13 +1,9 @@
 Supermake Readme
 ================
 
-Supermake is a simple makefile generator for C and C++ that goes above and beyond to _streamline_ and _simplify_ the entire tedious build process.
+Supermake is a C and C++ 'build tool' focused on radical ease of use. You run a single command and get running software.
 
-Try it out with `supermake`. Really. Supermake is designed to do everything for you automatically with aggressive defaults. Run this and you'll go straight from all the sourcecode in your current directory to running software. As hard as running `python` or `ruby`, but C/C++.
-
-If you already have a build system in place, just check what it would generate with `supermake` --print`, which will automatically generate a makefile for the sourcecode in your current directory and print out the generated makefile to the console, without overwriting anything.
-
-**For full proper usage information, see `supermake --help`.**
+http://personalcomputer.github.com/supermake/
 
 ### Features
 * Start using it like you expect in an instant. Supermake just works, if you will.
@@ -23,7 +19,7 @@ If you already have a build system in place, just check what it would generate w
 * `supermake --binary=../bin/myprogram.run --debug --warn`
 * `supermake --binary=myprogram.run -R --custom=-DTEST`
 
-**Again, for full proper usage information, see `supermake --help`.**
+**For full proper usage information, see `supermake --help`.**
 
 ### Notes/Troubleshooting
 Supermake is written for python 3, but should (and seems to, from tests) work in python 2 as well.
