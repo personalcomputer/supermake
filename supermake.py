@@ -27,8 +27,8 @@ directory, streamlining and simplifying the build process. Powered by Unix
 Makefiles and GCC.
 
   --print         Print to the console instead of writing to a makefile.
-  --makefile-only Only generate a makefile; do not compile the project.       
-  --no-run        Compile the project, but do not automatically run it. 
+  --makefile-only Only generate a makefile; do not compile the project.
+  --no-run        Compile the project, but do not automatically run it.
   --recurse, -R   Recursively add source code from subdirectories as well.
   --debug         Add the -g and -DDEBUG debug flags to the gcc compilation
                   flags, and run it in gdb. (use --no-run to not run it in gdb
@@ -78,6 +78,7 @@ libraries = { #There are a lot of problems with the current approach, but most a
   'glib.h': ['`pkg-config --cflags --libs glib-2.0`'],
   'SFML': ['-lsfml-graphics -lsfml-window -lsfml-system'],
   'png': ['`libpng-config --cflags --ldflags --libs`'],
+  'glpk': ['-lglpk -lm'],
 
   'SDL/': ['`sdl-config --cflags --libs`'],
   'SDL/SDL_image.h': ['-lSDL_image'],
@@ -107,6 +108,7 @@ libraries = { #There are a lot of problems with the current approach, but most a
   'boost/test/': ['-lboost_unit_test_framework', '-DBOOST_TEST_DYN_LINK'], #You're on your own altering your makefile(s) after this to actually set up a testing environment. This is not fire-and-forget like the rest of Supermake. If it was a cli parameter it would be undocumented.
 
   'OGRE/': ['-lOgreMain'],
+  'Ogre': ['-lOgreMain'],
 
   'OIS/': ['-lOIS'],
 
