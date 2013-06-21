@@ -1,16 +1,16 @@
 #!/usr/bin/env python
 #
 #   Supermake is free software: you can redistribute it and/or modify
-#   it under the terms of the GNU General Public License as published by
+#   it under the terms of the GNU Lesser General Public License as published by
 #   the Free Software Foundation, either version 3 of the License, or
 #   (at your option) any later version.
 #
 #   This program is distributed in the hope that it will be useful,
 #   but WITHOUT ANY WARRANTY; without even the implied warranty of
 #   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#   GNU General Public License for more details.
+#   GNU Lesser General Public License for more details.
 #
-#   You should have received a copy of the GNU General Public License
+#   You should have received a copy of the GNU Lesser General Public License
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 # Supermake is created by personalcomputer <https://github.com/personalcomputer>
@@ -415,97 +415,93 @@ class Supermake:
   '''Supermake :)'''
 
   def __init__(self):
-    try:
-      arguments = sys.argv[1:]
-      if helpArguments & set(arguments):
-        print(usage)
-        sys.exit(0)
-      self._options = Options(arguments)
+    arguments = sys.argv[1:]
+    if helpArguments & set(arguments):
+      print(usage)
+      sys.exit(0)
+    self._options = Options(arguments)
 
-      if self._options.quiet:
-        global messenger
-        messenger.SetQuiet()
+    if self._options.quiet:
+      global messenger
+      messenger.SetQuiet()
 
-      # Crawl
-      self._Crawl()
+    # Crawl
+    self._Crawl()
 
-      # Name binary
-      self._buildName = self._options.binaryName
-      if not self._buildName and not self._options.libraryName:
-        self._buildName = self._GuessBuildName()
-        self._buildName = os.path.join(os.path.dirname(self._buildName), self._options.prefix+os.path.basename(self._buildName))
-        messenger.WarningMessage('Guessed a binary name: \''+self._buildName+'\' (use --binary=NAME to specify this yourself)')
+    # Name binary
+    self._buildName = self._options.binaryName
+    if not self._buildName and not self._options.libraryName:
+      self._buildName = self._GuessBuildName()
+      self._buildName = os.path.join(os.path.dirname(self._buildName), self._options.prefix+os.path.basename(self._buildName))
+      messenger.WarningMessage('Guessed a binary name: \''+self._buildName+'\' (use --binary=NAME to specify this yourself)')
 
-      # Create the makefile
-      self._makefile = self._GenerateMakefile()
+    # Create the makefile
+    self._makefile = self._GenerateMakefile()
 
-      # Print the makefile
-      if self._options.printMakefile:
-        print(self._makefile)
-        return
+    # Print the makefile
+    if self._options.printMakefile:
+      print(self._makefile)
+      return
 
-      if not self._options.discrete:
-        self._makefile = makefileHeader+'\n'+self._makefile #Add header
+    if not self._options.discrete:
+      self._makefile = makefileHeader+'\n'+self._makefile #Add header
 
-      # Find old makefile to determine if autoclean is needed and to make a backup
-      self._oldMakefileName = ''
-      if os.path.exists(self._options.prefix+'makefile'):
-        self._oldMakefileName = self._options.prefix+'makefile'
-      elif os.path.exists(self._options.prefix+'Makefile'):
-        self._oldMakefileName = self._options.prefix+'Makefile'
+    # Find old makefile to determine if autoclean is needed and to make a backup
+    self._oldMakefileName = ''
+    if os.path.exists(self._options.prefix+'makefile'):
+      self._oldMakefileName = self._options.prefix+'makefile'
+    elif os.path.exists(self._options.prefix+'Makefile'):
+      self._oldMakefileName = self._options.prefix+'Makefile'
 
-      autoCleanNeeded = False
+    autoCleanNeeded = False
+    if self._oldMakefileName:
+      autoCleanNeeded = self._IsAutocleanNeeded()
+
+      oldMakefileFile = open(self._oldMakefileName, 'r')
+
+      if oldMakefileFile.read() != self._makefile:
+        oldMakefileBackupFd, oldMakefileBackupPath = tempfile.mkstemp(prefix='old_'+self._oldMakefileName+'_', text=True)
+        oldMakefileBackupFile = os.fdopen(oldMakefileBackupFd, 'w')
+        messenger.WarningMessage('Overwriting previous makefile (previous makefile copied to \''+oldMakefileBackupPath+'\' in case you weren\'t ready for this!)')
+        oldMakefileBackupFile.write(oldMakefileFile.read())
+        oldMakefileBackupFile.close()
+
+      oldMakefileFile.close()
+    else:
+      for filename in os.listdir('.'):
+        if filename.endswith('.o'):
+          autoCleanNeeded = True
+          break
+
+    # Write out new makefile
+    makefileFile = open(self._options.prefix+'makefile', 'w')
+    makefileFile.write(self._makefile)
+    makefileFile.close()
+
+    # Autoclean
+    if autoCleanNeeded:
       if self._oldMakefileName:
-        autoCleanNeeded = self._IsAutocleanNeeded()
-
-       	oldMakefileFile = open(self._oldMakefileName, 'r')
-
-        if oldMakefileFile.read() != self._makefile:
-          oldMakefileBackupFd, oldMakefileBackupPath = tempfile.mkstemp(prefix='old_'+self._oldMakefileName+'_', text=True)
-          oldMakefileBackupFile = os.fdopen(oldMakefileBackupFd, 'w')
-          messenger.WarningMessage('Overwriting previous makefile (previous makefile copied to \''+oldMakefileBackupPath+'\' in case you weren\'t ready for this!)')
-          oldMakefileBackupFile.write(oldMakefileFile.read())
-          oldMakefileBackupFile.close()
-
-        oldMakefileFile.close()
+        messenger.NoticeMessage('Makefiles critically differ. Cleaning old build files.')
       else:
-        for filename in os.listdir('.'):
-          if filename.endswith('.o'):
-            autoCleanNeeded = True
-            break
+        messenger.NoticeMessage('Cleaning old build files.')
+      if self._options.prefix:
+        os.system(make_cmd+' -f '+self._options.prefix+'makefile clean')
+      else:
+        os.system(make_cmd+' clean')
 
-      # Write out new makefile
-      makefileFile = open(self._options.prefix+'makefile', 'w')
-      makefileFile.write(self._makefile)
-      makefileFile.close()
+    # Compile
+    compilationSuccesful = False
+    if self._options.make:
+      compilationSuccesful = self._Compile()
 
-      # Autoclean
-      if autoCleanNeeded:
-        if self._oldMakefileName:
-          messenger.NoticeMessage('Makefiles critically differ. Cleaning old build files.')
-        else:
-          messenger.NoticeMessage('Cleaning old build files.')
-        if self._options.prefix:
-          os.system(make_cmd+' -f '+self._options.prefix+'makefile clean')
-        else:
-          os.system(make_cmd+' clean')
-
-      # Compile
-      compilationSuccesful = False
-      if self._options.make:
-         compilationSuccesful = self._Compile()
-
-      # Run
-      if self._options.run:
-        if not compilationSuccesful:
-          raise SupermakeError('Compilation failed.')
-        self._Run()
-
+    # Run
+    if self._options.run:
       if not compilationSuccesful:
-        sys.exit(1);
+        raise SupermakeError('Compilation failed.')
+      self._Run()
 
-    except SupermakeError as e:
-      messenger.ErrorMessage(e.What())
+    if not compilationSuccesful:
+      sys.exit(1);
 
   def _Crawl(self):
     '''Crawl, picking up all code files to generate a representation of all the code files and their dependencies.'''
@@ -715,4 +711,9 @@ class Supermake:
       os.system(' '.join(cmdargs))
 
 if __name__ == '__main__':
-  Supermake()
+  try:
+    Supermake()
+  except SupermakeError as e:
+    messenger.ErrorMessage(e.What())
+    sys.exit(1);
+
