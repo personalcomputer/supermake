@@ -79,6 +79,7 @@ libraries = { #There are a lot of problems with the current approach, but most a
   'SFML': ['-lsfml-graphics -lsfml-window -lsfml-system'],
   'png': ['`libpng-config --cflags --ldflags --libs`'],
   'glpk': ['-lglpk -lm'],
+  'gmp.h': ['-lgmpxx', '-lgmp'],
 
   'SDL/': ['`sdl-config --cflags --libs`'],
   'SDL/SDL_image.h': ['-lSDL_image'],
@@ -106,6 +107,8 @@ libraries = { #There are a lot of problems with the current approach, but most a
   'boost/program_options/': ['-lboost_program_options'],
   'boost/mpi': ['-lboost_mpi'],
   'boost/test/': ['-lboost_unit_test_framework', '-DBOOST_TEST_DYN_LINK'], #You're on your own altering your makefile(s) after this to actually set up a testing environment. This is not fire-and-forget like the rest of Supermake. If it was a cli parameter it would be undocumented.
+
+  'cln': ['-lcln'],
 
   'OGRE/': ['-lOgreMain'],
   'Ogre': ['-lOgreMain'],
