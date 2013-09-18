@@ -22,9 +22,9 @@ http://personalcomputer.github.com/supermake/
 **For full proper usage information, see `supermake --help`.**
 
 ### Notes/Troubleshooting
-Supermake is written for python 3, but should (and seems to, from tests) work in python 2 as well.
+Supermake is written for Python 3, but should (and seems to, from tests) work in Python 2 as well.
 
-Supermake is written for linux, but should work acceptably within a windows/mingw32 environment as well. MacOSX is wholy untested.
+Supermake is written for Linux, but should work acceptably within a Windows+cgywin/mingw32 environment as well. MacOSX is wholly untested.
 
 If Supermake fails to recognize some libraries you are using (there unfortunately won't be an error message on this until the compilation stage), you can manually add them to the `libraries` datastructure (definition near top of supermake.py). Supermake can't support every single library out there, but I try to support the ones I use most myself, at least. Send me your Github pull request with the additional library support and I'll gladly accept it.
 
