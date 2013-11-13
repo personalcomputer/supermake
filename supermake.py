@@ -591,13 +591,23 @@ class Supermake:
 
     return binaryName + executable_extension
 
+  def _GetObjectFileName(self, sourceCodeFile):
+    pathDistinguisher = sourceCodeFile.GetDirectory()
+    if self._options.src != '.':
+      pathDistinguisher = os.path.relpath(pathDistinguisher, self._options.src)
+    if pathDistinguisher in ['.', '']:
+      pathDistinguisher = ''
+    else:
+      pathDistinguisher = pathDistinguisher+'-'
+    return self._options.prefix+pathDistinguisher+sourceCodeFile.GetName()+'.o'
+
   def _GenerateMakefile(self):
     '''From some abstract options, generate the actual text of a gnu makefile.'''#Not sure removing this from its own unique class was a good idea. Flow of information now isn't explicit.
 
     makefile = ''
     makefile += 'OBJS = '
 
-    makefile += ' '.join(shellEscape(os.path.join(sourceCodeFile.GetDirectory(), self._options.prefix+sourceCodeFile.GetName()+'.o')) for sourceCodeFile in sorted(self._sourceCodeFiles, key=CodeFile.GetFullPath))
+    makefile += ' '.join(shellEscape(self._GetObjectFileName(sourceCodeFile)) for sourceCodeFile in sorted(self._sourceCodeFiles, key=CodeFile.GetFullPath))
 
     makefile += '\n'
 
@@ -662,7 +672,7 @@ class Supermake:
       makefile += '\t'+compiler+' $(OBJS) $(FLAGS)'+additionalLibrarySearchPaths+' -o '+shellEscape(self._buildName)+'\n\n'
 
     for sourceCodeFile in sorted(self._sourceCodeFiles, key=CodeFile.GetFullPath):
-      objectFileName = shellEscape(os.path.join(sourceCodeFile.GetDirectory(), self._options.prefix+sourceCodeFile.GetName()+'.o'))
+      objectFileName = shellEscape(self._GetObjectFileName(sourceCodeFile))
       makefile += objectFileName+': '+shellEscape(sourceCodeFile.GetFullPath())+' '+' '.join([shellEscape(codeFile.GetFullPath()) for codeFile in sorted(sourceCodeFile.GetCodeFileDependencies(), key=CodeFile.GetFullPath)])+'\n'
       makefile += '\t'+compiler+' $(FLAGS) -c '+shellEscape(sourceCodeFile.GetFullPath())+' -o '+objectFileName+'\n\n'
 
