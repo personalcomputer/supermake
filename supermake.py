@@ -87,6 +87,11 @@ libraries = { #There are a lot of problems with the current approach, but most a
   'png': ['`libpng-config --cflags --ldflags --libs`'],
   'glpk': ['-lglpk -lm'],
   'gmp.h': ['-lgmpxx', '-lgmp'],
+  'armadillo': ['-larmadillo'],
+  'cln': ['-lcln'],
+  'OIS/': ['-lOIS'],
+  'gtk/': ['`pkg-config --cflags --libs gtk+-3.0`'], #Sorry, no 2.x support. Supermake simply is not capable or designed to support multiple library versions. (but it will only take changing a single character if you need it..)
+  'gtkmm': ['`pkg-config gtkmm-3.0 --cflags --libs`'],
 
   'SDL/': ['`sdl-config --cflags --libs`'],
   'SDL/SDL_image.h': ['-lSDL_image'],
@@ -115,16 +120,8 @@ libraries = { #There are a lot of problems with the current approach, but most a
   'boost/mpi': ['-lboost_mpi'],
   'boost/test/': ['-lboost_unit_test_framework', '-DBOOST_TEST_DYN_LINK'], #You're on your own altering your makefile(s) after this to actually set up a testing environment. This is not fire-and-forget like the rest of Supermake. If it was a cli parameter it would be undocumented.
 
-  'cln': ['-lcln'],
-
   'OGRE/': ['-lOgreMain'],
   'Ogre': ['-lOgreMain'],
-
-  'OIS/': ['-lOIS'],
-
-  'gtk/': ['`pkg-config --cflags --libs gtk+-3.0`'], #Sorry, no 2.x support. Supermake simply is not capable or designed to support multiple library versions. (but it will only take changing a single character if you need it..)
-
-  'gtkmm': ['`pkg-config gtkmm-3.0 --cflags --libs`'],
 }
 
 c_source_extensions      = set(['c'])
