@@ -1,0 +1,74 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "supermake"
+version = "0.1.0"
+description = "supermake"
+readme = "README.md"
+authors = [
+    { name = "John Miller", email = "john@johngm.com" },
+]
+requires-python = ">=3.11"
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: Implementation :: CPython",
+]
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/personalcomputer/supermake"
+
+[project.scripts]
+supermake = "supermake.main:main"
+
+[tool.hatch.build]
+only-include = [
+    "supermake",
+]
+
+[dependency-groups]
+dev = [
+    "black",
+    "coverage",
+    "hatchling",
+    "pytest",
+    "mypy",
+    "codespell",
+    "isort",
+    "ruff",
+    "ipdb",
+]
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+select = [
+    # pycodestyle
+    "E",
+    # Pyflakes
+    "F",
+    # pyupgrade
+    "UP",
+    # flake8-bugbear
+    "B",
+]
+ignore = [
+    "UP038", "E203", "SIM108"
+]
+
+[tool.isort]
+line_length = 120
+default_section = "THIRDPARTY"  # codespell:ignore
+order_by_type = true
+profile = "black"
+
+[tool.black]
+line-length = 120
+
+[tool.pytest.ini_options]
+addopts = "--doctest-modules"
